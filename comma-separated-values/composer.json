@@ -1,0 +1,39 @@
+{
+    "name": "php-tools/comma-separated-values",
+    "description": "Csv file reader utility",
+    "license": "MIT",
+    "keywords": [
+        "comma-separated-values",
+        "csv"
+    ],
+    "authors": [
+        {
+            "name": "Jian.Ma",
+            "email": "jian.ma@poper.co"
+        }
+    ],
+    "require": {
+        "php": "^8.4"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.8 | ^4.1",
+        "laravel/pint": "^1.25"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPTools\\CommaSeparatedValues\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,54 @@
+{
+    "name": "php-tools/packages",
+    "description": "Monorepo for php-tools/* Laravel and standalone PHP packages.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jian.Ma",
+            "email": "jian.ma@poper.co"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "php-tools/comma-separated-values": "^1.0",
+        "php-tools/laravel-approval": "^1.0",
+        "php-tools/laravel-csv-parser": "^1.0",
+        "php-tools/laravel-database-task": "^1.0",
+        "php-tools/laravel-filament-approval": "^1.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./comma-separated-values"
+        },
+        {
+            "type": "path",
+            "url": "./laravel-approval"
+        },
+        {
+            "type": "path",
+            "url": "./laravel-csv-parser"
+        },
+        {
+            "type": "path",
+            "url": "./laravel-database-task"
+        },
+        {
+            "type": "path",
+            "url": "./laravel-filament-approval"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
