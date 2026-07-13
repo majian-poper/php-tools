@@ -10,37 +10,30 @@
     ],
     "require": {
         "php": "^8.4",
-        "php-tools/comma-separated-values": "^1.0",
-        "php-tools/laravel-approval": "^1.0",
-        "php-tools/laravel-csv-parser": "^1.0",
-        "php-tools/laravel-database-task": "^1.0",
-        "php-tools/laravel-filament-approval": "^1.0"
+        "calebporzio/sushi": "^2.5",
+        "composer/semver": "^3.4",
+        "filament/filament": "^3.0 || ^4.0 || ^5.0",
+        "filament/spatie-laravel-media-library-plugin": "^3.0 || ^4.0 || ^5.0",
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "spatie/laravel-package-tools": "^1.16",
+        "symfony/finder": "^7.4",
+        "ua-parser/uap-php": "^3.10"
+    },
+    "replace": {
+        "php-tools/comma-separated-values": "self.version",
+        "php-tools/laravel-approval": "self.version",
+        "php-tools/laravel-csv-parser": "self.version",
+        "php-tools/laravel-database-task": "self.version",
+        "php-tools/laravel-filament-approval": "self.version"
     },
     "require-dev": {
         "laravel/pint": "^1.29"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "./comma-separated-values"
-        },
-        {
-            "type": "path",
-            "url": "./laravel-approval"
-        },
-        {
-            "type": "path",
-            "url": "./laravel-csv-parser"
-        },
-        {
-            "type": "path",
-            "url": "./laravel-database-task"
-        },
-        {
-            "type": "path",
-            "url": "./laravel-filament-approval"
+    "autoload": {
+        "psr-4": {
+            "PHPTools\\": "src/PHPTools/"
         }
-    ],
+    },
     "config": {
         "sort-packages": true
     },
