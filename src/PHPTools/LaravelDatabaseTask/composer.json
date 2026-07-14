@@ -1,0 +1,46 @@
+{
+    "name": "php-tools/laravel-database-task",
+    "description": "Laravel database task package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jian.Ma",
+            "email": "jian.ma@poper.co"
+        }
+    ],
+    "keywords": [
+        "laravel",
+        "filamentphp"
+    ],
+    "require": {
+        "php": "^8.4",
+        "calebporzio/sushi": "^2.5",
+        "composer/semver": "^3.4",
+        "filament/filament": "^3.0 || ^4.0 || ^5.0",
+        "filament/spatie-laravel-media-library-plugin": "^3.0 || ^4.0 || ^5.0",
+        "symfony/finder": "^7.0 || ^8.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPTools\\LaravelDatabaseTask\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "PHPTools\\LaravelDatabaseTask\\DatabaseTaskServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

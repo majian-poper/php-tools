@@ -2,15 +2,27 @@
 
 namespace PHPTools\LaravelFilamentApproval;
 
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
-class FilamentApprovalServiceProvider extends PackageServiceProvider
+class FilamentApprovalServiceProvider extends ServiceProvider
 {
-    public function configurePackage(Package $package): void
+    public function boot(): void
     {
-        $package
-            ->name('laravel-filament-approval')
-            ->hasTranslations();
+        $this->bootTranslations();
+    }
+
+    protected function bootTranslations(): void
+    {
+        $vendorTranslations = __DIR__ . '/files/lang';
+
+        $appTranslations = \function_exists('lang_path')
+            ? lang_path('vendor/filament-approval')
+            : resource_path('lang/vendor/filament-approval');
+
+        $this->loadTranslationsFrom($vendorTranslations, 'filament-approval');
+
+        if ($this->app->runningInConsole()) {
+            $this->publishes([$vendorTranslations => $appTranslations], 'filament-approval-translations');
+        }
     }
 }

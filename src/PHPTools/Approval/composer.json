@@ -1,0 +1,45 @@
+{
+    "name": "php-tools/laravel-approval",
+    "description": "laravel approval",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jian.Ma",
+            "email": "jian.ma@poper.co"
+        }
+    ],
+    "keywords": [
+        "laravel",
+        "laravel-approval"
+    ],
+    "require": {
+        "php": "^8.4",
+        "illuminate/contracts": "^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPTools\\Approval\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "PHPTools\\Approval\\ApprovalServiceProvider"
+            ],
+            "aliases": {
+                "Approval": "PHPTools\\Approval\\Facades\\Approval"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

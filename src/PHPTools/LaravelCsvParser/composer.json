@@ -1,0 +1,44 @@
+{
+    "name": "php-tools/laravel-csv-parser",
+    "description": "A csv parser package for Laravel applications.",
+    "license": "MIT",
+    "keywords": [
+        "comma-separated-values",
+        "csv",
+        "laravel-csv-parser"
+    ],
+    "authors": [
+        {
+            "name": "Jian.Ma",
+            "email": "jian.ma@poper.co"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "php-tools/comma-separated-values": "^1.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPTools\\LaravelCsvParser\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "PHPTools\\LaravelCsvParser\\CsvParserPackageServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

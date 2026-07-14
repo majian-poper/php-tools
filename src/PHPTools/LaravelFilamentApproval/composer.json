@@ -1,0 +1,46 @@
+{
+    "name": "php-tools/laravel-filament-approval",
+    "description": "Filament integration for php-tools/laravel-approval",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jian.Ma",
+            "email": "jian.ma@poper.co"
+        }
+    ],
+    "keywords": [
+        "laravel",
+        "laravel-approval",
+        "filamentphp"
+    ],
+    "require": {
+        "php": "^8.4",
+        "composer/semver": "^3.4",
+        "filament/filament": "^3.0 || ^4.0 || ^5.0",
+        "php-tools/laravel-approval": "^1.0",
+        "ua-parser/uap-php": "^3.10"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPTools\\LaravelFilamentApproval\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "PHPTools\\LaravelFilamentApproval\\FilamentApprovalServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
