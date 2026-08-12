@@ -14,4 +14,9 @@ return [
         'classes' => [],
     ],
 
+    'queue' => [
+        'timeout' => 60,
+        'tries' => 3,
+    ],
+
 ];

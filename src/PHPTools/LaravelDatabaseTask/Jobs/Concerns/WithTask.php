@@ -11,7 +11,9 @@ trait WithTask
 {
     public readonly Models\DatabaseTask $databaseTask;
 
-    public $timeout = 300; // 5 minutes
+    public int $timeout;
+
+    public int $tries;
 
     public function middleware(): array
     {
@@ -21,6 +23,11 @@ trait WithTask
     public function setDatabaseTask(Models\DatabaseTask $databaseTask): void
     {
         $this->databaseTask = $databaseTask;
+
+        $task = $this->getTask();
+
+        $this->timeout = \method_exists($task, 'timeout') ? $task->timeout() : config('database-task.queue.timeout', 60);
+        $this->tries = \method_exists($task, 'tries') ? $task->tries() : config('database-task.queue.tries', 3);
     }
 
     public function getDatabaseTask(): Models\DatabaseTask
