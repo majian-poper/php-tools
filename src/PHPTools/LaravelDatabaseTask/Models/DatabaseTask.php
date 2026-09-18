@@ -158,7 +158,7 @@ class DatabaseTask extends Model
                     ->where('batch_order', $output instanceof Contracts\BatchableOutput ? $output->getBatchOrder() : 0)
                     ->delete();
 
-                return DatabaseTaskFacade::fromOutput($output, $this)->save();
+                return DatabaseTaskFacade::toOutputModel($output, $this)->save();
             }
         );
     }

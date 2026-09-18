@@ -40,10 +40,6 @@ return [
         'label' => 'タスク出力結果',
         'output_value' => '出力内容',
         'expires_at' => '有効期限',
-
-        'actions' => [
-            'download' => 'ダウンロード',
-        ],
     ],
 
     'database_task_class' => [
@@ -51,6 +47,12 @@ return [
 
         'actions' => [
             'create' => '作成',
+        ],
+    ],
+
+    'database_task_file' => [
+        'actions' => [
+            'download' => 'ダウンロード',
         ],
     ],
 

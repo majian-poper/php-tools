@@ -38,7 +38,7 @@ class DispatchBatchableTask implements ShouldQueue
                 ->whereInstanceOf(Contracts\BatchableInput::class);
 
             $batchableInputValues = $batchableInputs->map(
-                static fn(Contracts\BatchableInput $input): array => DatabaseTaskFacade::fromInput($input, $databaseTask)->getAttributes()
+                static fn(Contracts\BatchableInput $input): array => DatabaseTaskFacade::toInputModel($input, $databaseTask)->getAttributes()
             );
 
             $jobs = $batchableInputs

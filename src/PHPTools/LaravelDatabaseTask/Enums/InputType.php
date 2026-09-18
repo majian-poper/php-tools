@@ -26,15 +26,6 @@ enum InputType: string
         };
     }
 
-    // 支持上传文件替换输入内容的类型
-    public function canBeFile(): bool
-    {
-        return match ($this) {
-            static::NUMBER, static::FILE => true,
-            default => false,
-        };
-    }
-
     public function canBeExcluded(): bool
     {
         return match ($this) {

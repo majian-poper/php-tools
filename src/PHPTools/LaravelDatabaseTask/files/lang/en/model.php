@@ -40,10 +40,6 @@ return [
         'label' => 'Task output',
         'output_value' => 'Output value',
         'expires_at' => 'Expires at',
-
-        'actions' => [
-            'download' => 'Download',
-        ],
     ],
 
     'database_task_class' => [
@@ -51,6 +47,12 @@ return [
 
         'actions' => [
             'create' => 'Create',
+        ],
+    ],
+
+    'database_task_file' => [
+        'actions' => [
+            'download' => 'Download',
         ],
     ],
 

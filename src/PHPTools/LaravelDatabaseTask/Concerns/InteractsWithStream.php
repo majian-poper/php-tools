@@ -35,32 +35,27 @@ trait InteractsWithStream
         return null;
     }
 
-    /**
-     * @param \SplFileObject $to
-     *
-     * @return \SplFileObject
-     *
-     * @throws \RuntimeException
-     */
-    protected function writeStream(\SplFileObject $to): \SplFileObject
+    protected function writeStream(\SplFileObject $to): ?\SplFileObject
     {
+        if (! ($to->isWritable() || $to instanceof \SplTempFileObject)) {
+            return null;
+        }
+
         $from = $this->getStream();
 
-        $this->stream();
-
         if (! \is_resource($from)) {
-            return $to;
+            return null;
         }
 
-        if (! $to->isWritable() && ! ($to instanceof \SplTempFileObject)) {
-            throw new \RuntimeException(\sprintf('Target [%s] is not writable.', \get_class($to)));
+        try {
+            while (! \feof($from)) {
+                $to->fwrite(\fread($from, 8192));
+            }
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Error writing stream: ' . $e->getMessage(), previous: $e);
+        } finally {
+            \fclose($from);
         }
-
-        while (! \feof($from)) {
-            $to->fwrite(\fread($from, 8192));
-        }
-
-        \fclose($from);
 
         $to->rewind();
 

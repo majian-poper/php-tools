@@ -6,6 +6,7 @@ use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use PHPTools\LaravelDatabaseTask\Contracts\InputInterface;
@@ -89,12 +90,9 @@ class CreateDatabaseTask extends CreateRecord
 
         $task->user()->associate(Auth::user())->save();
 
-        $task->inputs()->insert(
-            collect(Arr::pull($data, 'inputs'))
-                ->map(static fn(array $array): ?array => DatabaseTaskFacade::fromInputArray($array, 0, $task)?->getAttributes())
-                ->filter()
-                ->all()
-        );
+        $inputModels = $this->toInputModels(Arr::pull($data, 'inputs'), $task);
+
+        $inputModels->each->save();
 
         return $task;
     }
@@ -120,14 +118,26 @@ class CreateDatabaseTask extends CreateRecord
                 function (): Htmlable {
                     $data = $this->form->getState();
 
-                    $inputs = collect(Arr::pull($data, 'inputs'))
-                        ->map(static fn(array $array) => DatabaseTaskFacade::fromInputArray($array, 0)?->toInput())
-                        ->filter()
-                        ->all();
+                    $inputs = $this->toInputs(Arr::pull($data, 'inputs'))->all();
 
                     return app($data['task_class'])->preview(...$inputs);
                 }
             )
             ->modalFooterActions([]);
+    }
+
+    protected function toInputs(array $inputs): Collection
+    {
+        return collect($inputs)
+            ->map(static fn(array $array) => DatabaseTaskFacade::arrayToInput($array, 0))
+            ->filter()
+            ->values();
+    }
+
+    protected function toInputModels(array $inputs, ?DatabaseTask $task = null): Collection
+    {
+        return $this->toInputs($inputs)
+            ->map(static fn(InputInterface $input) => DatabaseTaskFacade::toInputModel($input, $task))
+            ->values();
     }
 }

@@ -5,33 +5,30 @@ namespace PHPTools\LaravelDatabaseTask\Outputs;
 use PHPTools\LaravelDatabaseTask\Concerns;
 use PHPTools\LaravelDatabaseTask\Contracts;
 
-class FileOutput extends \SplFileObject implements Contracts\OutputInterface
+class FileOutput implements Contracts\OutputInterface
 {
+    use Concerns\HasFileObject;
     use Concerns\InteractsWithStream;
     use Concerns\Output\AsFileOutput {
         getValue as protected baseGetValue;
     }
 
-    protected bool $autoDelete = true;
+    public function __construct(?string $filename = null, string $mode = 'w+')
+    {
+        $filename ??= \tempnam(\sys_get_temp_dir(), 'dbtask_output_');
+
+        $this->createFile($filename, $mode);
+    }
 
     public function __destruct()
     {
-        if ($this->autoDelete && $this->isWritable()) {
-            @\unlink($this->getRealPath());
-        }
+        $this->deleteFile();
     }
 
     public function getValue(): ?\SplFileObject
     {
-        $this->writeStream($this);
+        $value = isset($this->file) ? $this->writeStream($this->file) : null;
 
-        return $this->baseGetValue() ?? $this;
-    }
-
-    public function autoClean(bool $autoClean = true): static
-    {
-        $this->autoDelete = $autoClean;
-
-        return $this;
+        return $value ?? $this->baseGetValue();
     }
 }

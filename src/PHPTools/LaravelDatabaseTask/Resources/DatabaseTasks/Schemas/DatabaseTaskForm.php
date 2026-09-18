@@ -94,6 +94,7 @@ class DatabaseTaskForm
             InputType::NUMBER => static::makeNumberField($input),
             InputType::SELECT => static::makeSelectField($input),
             InputType::DATETIME => static::makeDatetimeField($input),
+            InputType::FILE => static::makeFileField($input),
             InputType::BOOLEAN => Forms\Components\Checkbox::make('input_value'),
             default => throw new \RuntimeException('Unsupported input field type: ' . $inputType->value),
         };
@@ -151,8 +152,16 @@ class DatabaseTaskForm
             ->displayFormat($input->getDisplayFormat());
     }
 
+    protected static function makeFileField(InputInterface $input): Forms\Components\Field
+    {
+        return Forms\Components\FileUpload::make('input_value')
+            ->visibility('private')
+            ->storeFiles(false)
+            ->preserveFilenames()
+            ->preventFilePathTampering();
+    }
+
     /**
-     * TODO: 支持文件上传字段
      * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile $input
      */
     protected static function makeIsFileField(InputInterface $input): Forms\Components\Field
