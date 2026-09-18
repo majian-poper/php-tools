@@ -5,6 +5,7 @@ return [
     'id' => 'ID',
     'created_at' => 'Created at',
     'updated_at' => 'Updated at',
+    'deleted_at' => 'Deleted at',
 
     'database_task' => [
         'label' => 'DB task',
@@ -15,6 +16,7 @@ return [
         'risk' => 'Risk',
         'status' => 'Status',
         'schedules_at' => 'Schedules at',
+        'deleted_at' => 'Deleted at',
         'schedules_at_help_text' => '* If not set, it will be executed immediately after approved.<br/> * If the scheduled time has passed at the time of approve, it will be executed immediately.',
 
         'inputs' => 'Input items',

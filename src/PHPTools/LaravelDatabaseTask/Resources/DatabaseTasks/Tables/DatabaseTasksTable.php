@@ -54,6 +54,10 @@ class DatabaseTasksTable
                 ->label(__('database-task::model.updated_at'))
                 ->dateTime('Y-m-d H:i:s')
                 ->toggleable(isToggledHiddenByDefault: true),
+            Tables\Columns\TextColumn::make('deleted_at')
+                ->label(__('database-task::model.deleted_at'))
+                ->dateTime('Y-m-d H:i:s')
+                ->toggleable(isToggledHiddenByDefault: true),
         ];
     }
 
