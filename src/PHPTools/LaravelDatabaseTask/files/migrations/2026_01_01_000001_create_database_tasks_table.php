@@ -32,6 +32,8 @@ return new class extends Migration
             $table->text('input_value');
             $table->boolean('is_file')->default(false);
             $table->boolean('is_excluded')->default(false);
+            $table->unsignedInteger('batch_order')->default(0)->index();
+            $table->timestamp('validated_at')->nullable();
             $table->timestamps();
         });
 
@@ -41,6 +43,7 @@ return new class extends Migration
             $table->string('output_class')->index();
             $table->text('output_value');
             $table->boolean('is_file')->default(false);
+            $table->unsignedInteger('batch_order')->default(0)->index();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });

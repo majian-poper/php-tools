@@ -30,8 +30,6 @@ class CsvParserPackageServiceProvider extends ServiceProvider
     {
         $vendorMigrations = __DIR__ . '/files/migrations';
 
-        $this->loadMigrationsFrom($vendorMigrations);
-
         if (! $this->app->runningInConsole()) {
             return;
         }
