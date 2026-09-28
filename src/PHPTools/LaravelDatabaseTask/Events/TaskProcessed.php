@@ -5,11 +5,11 @@ namespace PHPTools\LaravelDatabaseTask\Events;
 use Illuminate\Foundation\Events\Dispatchable;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTask;
 
-class BatchableTaskMergeFailed
+class TaskProcessed
 {
     use Dispatchable;
 
-    public function __construct(public readonly DatabaseTask $databaseTask, public readonly \Throwable $e)
+    public function __construct(public readonly DatabaseTask $databaseTask, public readonly int $batchOrder)
     {
         //
     }

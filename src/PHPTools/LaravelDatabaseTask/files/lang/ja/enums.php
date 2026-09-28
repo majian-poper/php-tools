@@ -9,6 +9,7 @@ return [
     ],
 
     'task_status' => [
+        'VALIDATING' => '検証中',
         'UNAPPLIED' => '未申請',
         'PENDING' => '申請中',
         'APPROVED' => '承認済み',

@@ -49,11 +49,12 @@ class DatabaseTaskManager
     /**
      * @template T of Model
      * @param class-string<T> $modelClass
+     * @param array $attributes
      * @return T
      */
-    public function resolveModel(string $modelClass): Model
+    public function resolveModel(string $modelClass, array $attributes = []): Model
     {
-        return new ($this->resolveModelClass($modelClass));
+        return new ($this->resolveModelClass($modelClass))($attributes);
     }
 
     public function arrayToInput(array $data, int $batchOrder = 0): ?Contracts\InputInterface
@@ -74,12 +75,16 @@ class DatabaseTaskManager
         * AsNumber        => float                    e.g. 123.0
         *  |- multiple    => int string with comma    e.g. "1,2,3"
         * AsBoolean       => bool                     e.g. true | false
-        * AsSelect        => array<string | int>      e.g. ["abc", "def"] | [1, 2, 3]
+        * AsSelect        => array<string | int>      e.g. ["foo", "bar"] | [1, 2, 3]
         * AsDateTime      => string                   e.g. "2023-01-01 00:00:00" | "2023-01-01"
         * AsFile          => TemporaryUploadedFile | \SplFileObject.
         */
 
         $value = $data['input_value'];
+
+        if (blank($value)) {
+            return null;
+        }
 
         /** @var FileInput | Contracts\InputInterface $input */
         $input = app($inputClass);
@@ -142,12 +147,12 @@ class DatabaseTaskManager
     public function valueToString(mixed $value): string
     {
         return match (true) {
+            $value instanceof \DateTimeInterface => $value->format('Y-m-d H:i:s'),
+            $this->valueIsFile($value) => '',
             \is_null($value) => '',
             \is_string($value), \is_numeric($value) => (string) $value,
             \is_bool($value) => $value ? '1' : '0',
             \is_iterable($value) => \implode(',', \iterator_to_array($value)),
-            $this->valueIsFile($value) => '',
-            $value instanceof \DateTimeInterface => $value->format('Y-m-d H:i:s'),
             default => throw new \InvalidArgumentException('Unsupported value type.'),
         };
     }

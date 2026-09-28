@@ -44,7 +44,7 @@ trait InteractsWithStream
         $from = $this->getStream();
 
         if (! \is_resource($from)) {
-            return null;
+            return $to;
         }
 
         try {

@@ -16,6 +16,7 @@ return [
 
     'queue' => [
         'timeout' => 60,
+        'delay' => 3,
         'tries' => 3,
     ],
 

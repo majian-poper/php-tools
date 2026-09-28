@@ -9,6 +9,7 @@ return [
     ],
 
     'task_status' => [
+        'VALIDATING' => 'Validating',
         'UNAPPLIED' => 'Unapplied',
         'PENDING' => 'Pending',
         'APPROVED' => 'Approved',
