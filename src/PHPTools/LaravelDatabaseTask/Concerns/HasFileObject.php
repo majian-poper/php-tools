@@ -2,6 +2,9 @@
 
 namespace PHPTools\LaravelDatabaseTask\Concerns;
 
+/**
+ * @mixin \SplFileObject
+ */
 trait HasFileObject
 {
     protected ?\SplFileObject $file = null;

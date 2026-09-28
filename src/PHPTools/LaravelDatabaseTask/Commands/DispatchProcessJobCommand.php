@@ -76,9 +76,11 @@ class DispatchProcessJobCommand extends Command
 
     protected function thenFor(Models\DatabaseTask $databaseTask): \Closure
     {
-        return $databaseTask->toTask() instanceof Contracts\BatchableTaskInterface
-            ? static fn() => Jobs\MergeTask::dispatch($databaseTask)->delay(config('database-task.queue.delay'))
-            : static fn() => null;
+        if (! $databaseTask->toTask() instanceof Contracts\BatchableTaskInterface) {
+            return static fn() => null;
+        }
+
+        return static fn() => Jobs\MergeTask::dispatch($databaseTask)->delay(config('database-task.queue.delay'));
     }
 
     protected function dispatchFailed(Models\DatabaseTask $databaseTask, string $reason): void

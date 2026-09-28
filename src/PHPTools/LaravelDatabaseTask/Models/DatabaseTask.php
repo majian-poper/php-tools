@@ -3,18 +3,17 @@
 namespace PHPTools\LaravelDatabaseTask\Models;
 
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Enums;
 use PHPTools\LaravelDatabaseTask\Events;
 use PHPTools\LaravelDatabaseTask\Facades\DatabaseTaskFacade;
-use PHPTools\LaravelDatabaseTask\Outputs\NullOutput;
+use PHPTools\LaravelDatabaseTask\Inputs\FileInput;
 use PHPTools\LaravelDatabaseTask\Outputs\TextOutput;
 
 /**
@@ -27,7 +26,6 @@ use PHPTools\LaravelDatabaseTask\Outputs\TextOutput;
  * @property Enums\TaskStatus $status
  * @property \Carbon\CarbonImmutable | null $schedules_at
  *
- * @property-read string $job_name
  * @property-read \Illuminate\Database\Eloquent\Model $user
  * @property-read \Illuminate\Database\Eloquent\Collection<DatabaseTaskInput> $inputs
  * @property-read \Illuminate\Database\Eloquent\Collection<DatabaseTaskOutput> $outputs
@@ -92,68 +90,62 @@ class DatabaseTask extends Model
 
     // --- Task Inputs ---
 
-    /**
-     * Get all non-batchable inputs for this task.
-     *
-     * @return array<Contracts\InputInterface>
-     */
-    public function getNonBatchableInputs(): array
+    public function saveInputs(Contracts\InputInterface ...$inputs): bool
     {
-        return $this->inputs()
-            ->where('batch_order', 0)
-            ->get()
-            ->load('file')
-            ->map->toInput()
-            ->whereInstanceOf(Contracts\InputInterface::class)
-            ->all();
-    }
+        if (! $this->exists) {
+            return false;
+        }
 
-    /**
-     * Get all inputs for the specified batch order, including all non-batchable inputs.
-     *
-     * @return array<Contracts\InputInterface | Contracts\BatchableInput>
-     */
-    public function getInputsForBatch(int $batchOrder = 0): array
-    {
-        return $this->inputs()
-            ->where(
-                static fn(Builder $query): Builder => $query
-                    ->where('batch_order', 0)
-                    ->when($batchOrder > 0)->orWhere('batch_order', $batchOrder)
-            )
-            ->get()
-            ->load('file')
-            ->map->toInput()
-            ->whereInstanceOf(Contracts\InputInterface::class)
-            ->all();
+        $task = $this->toTask();
+
+        if (! $task instanceof Contracts\TaskInterface) {
+            return false;
+        }
+
+        if (blank($inputs)) {
+            return true;
+        }
+
+        $inputs = collect($inputs)->filter(
+            function (Contracts\InputInterface $input): bool {
+                return $input instanceof Contracts\BatchableInput ? $input->getBatchOrder() === 0 : true;
+            }
+        );
+
+        if (\is_subclass_of($task, Contracts\BatchableTaskInterface::class)) {
+            $inputs->push(...\iterator_to_array($task->getBatchableInputs(...$inputs->all())));
+        }
+
+        [$fileInputModels, $normalInputModels] = $inputs
+            ->map(fn(Contracts\InputInterface $input) => DatabaseTaskFacade::toInputModel($input, $this))
+            ->partition(static fn(DatabaseTaskInput $inputModel): bool => $inputModel->toInput() instanceof FileInput);
+
+        return $this->transactionCallback(
+            function () use ($fileInputModels, $normalInputModels): bool {
+                $this->inputs()->delete();
+
+                $fileInputsSaved = $fileInputModels->every(
+                    static fn(DatabaseTaskInput $inputModel): bool => $inputModel->save()
+                );
+
+                if (! $fileInputsSaved) {
+                    return false;
+                }
+
+                return $normalInputModels
+                    ->map(static fn(DatabaseTaskInput $inputModel): array => $inputModel->getAttributes())
+                    ->chunk(100)
+                    ->every(fn(Collection $chunk) => $this->inputs()->fillAndInsert($chunk->all()));
+            }
+        );
     }
 
     // --- Task Outputs ---
-
-    /**
-     * Get all batchable outputs
-     *
-     * @return array<Contracts\BatchableOutput>
-     */
-    public function getBatchableOutputs(): array
-    {
-        return $this->outputs()
-            ->where('output_class', '!=', NullOutput::class)
-            ->where('batch_order', '>', 0)
-            ->orderBy('batch_order')
-            ->get()
-            ->load('file')
-            ->map->toOutput()
-            ->whereInstanceOf(Contracts\BatchableOutput::class)
-            ->all();
-    }
 
     public function saveOutput(Contracts\OutputInterface | Contracts\BatchableOutput $output): bool
     {
         return $this->transactionCallback(
             function () use ($output): bool {
-                // TODO: Spatie Media file cleanup use command `deleted-output-media:clean`
-
                 $this->outputs()
                     ->where('batch_order', $output instanceof Contracts\BatchableOutput ? $output->getBatchOrder() : 0)
                     ->delete();
@@ -183,6 +175,11 @@ class DatabaseTask extends Model
         );
     }
 
+    public function moveToUnappliedStatus(): bool
+    {
+        return $this->transactionCallback(fn(): bool => $this->moveToStatus(Enums\TaskStatus::UNAPPLIED));
+    }
+
     public function moveToProcessedStatus(Contracts\OutputInterface $output): bool
     {
         return $this->transactionCallback(
@@ -190,34 +187,16 @@ class DatabaseTask extends Model
         );
     }
 
-    /**
-     * @param \Closure(): bool $callback
-     */
-    protected function transactionCallback(\Closure $callback): bool
-    {
-        $callback = fn() => throw_if(value($callback) === false, \RuntimeException::class, 'Callback returned false.');
-
-        try {
-            $this->getConnection()->transactionLevel() > 0
-                ? $callback()
-                : $this->getConnection()->transaction($callback);
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-        return true;
-    }
-
     // --- Task actions ---
 
     public function previewable(): bool
     {
-        return \in_array($this->status, [Enums\TaskStatus::UNAPPLIED, Enums\TaskStatus::PENDING]) || ! $this->outputs()->exists();
+        return \in_array($this->status, [Enums\TaskStatus::VALIDATING, Enums\TaskStatus::UNAPPLIED, Enums\TaskStatus::PENDING]) || ! $this->outputs()->exists();
     }
 
     public function preview(): Htmlable
     {
-        return $this->toTask()->preview(...$this->getNonBatchableInputs());
+        return $this->toTask()->preview(...$this->normal_inputs()->get()->map->toInput()->all());
     }
 
     public function requestable(): bool
@@ -234,15 +213,6 @@ class DatabaseTask extends Model
         }
 
         return $result;
-    }
-
-    // --- Accessors ---
-
-    public function jobName(): Attribute
-    {
-        return Attribute::make(
-            get: fn(): string => \sprintf('%s#%d', class_basename($this->task_class), $this->getKey()),
-        );
     }
 
     // --- Relationships ---
@@ -270,5 +240,23 @@ class DatabaseTask extends Model
     public function normal_outputs(): HasMany
     {
         return $this->outputs()->where('batch_order', 0);
+    }
+
+    /**
+     * @param \Closure(): bool $callback
+     */
+    protected function transactionCallback(\Closure $callback): bool
+    {
+        $callback = fn() => throw_if(value($callback) === false, \RuntimeException::class, 'Callback returned false.');
+
+        try {
+            $this->getConnection()->transactionLevel() > 0
+                ? $callback()
+                : $this->getConnection()->transaction($callback);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return true;
     }
 }

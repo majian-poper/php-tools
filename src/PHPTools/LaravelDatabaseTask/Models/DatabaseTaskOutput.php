@@ -113,7 +113,7 @@ class DatabaseTaskOutput extends Model implements HasMedia
         }
 
         if (\method_exists($output, 'value')) {
-            $output->value($this->output_value);
+            $output->value($isFile ? null : $this->output_value);
         }
 
         if ($output instanceof Contracts\BatchableOutput && \method_exists($output, 'batchOrder')) {
