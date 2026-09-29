@@ -112,7 +112,7 @@ class DatabaseTask extends Model
             }
         );
 
-        if (\is_subclass_of($task, Contracts\BatchableTaskInterface::class)) {
+        if (\is_subclass_of($task, Contracts\BatchableTask::class)) {
             $inputs->push(...\iterator_to_array($task->getBatchableInputs(...$inputs->all())));
         }
 

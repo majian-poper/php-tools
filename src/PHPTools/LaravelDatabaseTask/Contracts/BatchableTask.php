@@ -2,7 +2,7 @@
 
 namespace PHPTools\LaravelDatabaseTask\Contracts;
 
-interface BatchableTaskInterface extends TaskInterface
+interface BatchableTask extends TaskInterface
 {
     /**
      * @return iterable<BatchableInput>

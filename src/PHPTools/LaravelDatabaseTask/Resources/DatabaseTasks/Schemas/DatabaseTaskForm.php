@@ -11,6 +11,7 @@ use PHPTools\LaravelDatabaseTask\Contracts\InputInterface;
 use PHPTools\LaravelDatabaseTask\Contracts\TaskInterface;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 use PHPTools\LaravelDatabaseTask\Enums\TaskRisk;
+use PHPTools\LaravelDatabaseTask\Inputs\ChunkInput;
 
 class DatabaseTaskForm
 {
@@ -53,6 +54,7 @@ class DatabaseTaskForm
 
                         if (filled($taskType) && \is_subclass_of($taskType, TaskInterface::class)) {
                             return collect($taskType::getSupportInputs())
+                                ->reject(static fn($input): bool => $input instanceof ChunkInput)
                                 ->map(static::makeFieldsetFor(...))
                                 ->all();
                         }
@@ -75,7 +77,6 @@ class DatabaseTaskForm
                 [
                     Forms\Components\Hidden::make('input_class'),
                     static::makeInputValueField($input),
-                    static::makeIsFileField($input),
                     static::makeIsExcludedField($input),
                 ]
             )
@@ -159,15 +160,6 @@ class DatabaseTaskForm
             ->storeFiles(false)
             ->preserveFilenames()
             ->preventFilePathTampering();
-    }
-
-    /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile $input
-     */
-    protected static function makeIsFileField(InputInterface $input): Forms\Components\Field
-    {
-        return Forms\Components\Hidden::make('is_file')
-            ->label(__('database-task::tasks.input_types.is_file'));
     }
 
     /**

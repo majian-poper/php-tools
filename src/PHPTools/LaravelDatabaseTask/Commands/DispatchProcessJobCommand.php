@@ -76,7 +76,7 @@ class DispatchProcessJobCommand extends Command
 
     protected function thenFor(Models\DatabaseTask $databaseTask): \Closure
     {
-        if (! $databaseTask->toTask() instanceof Contracts\BatchableTaskInterface) {
+        if (! $databaseTask->toTask() instanceof Contracts\BatchableTask) {
             return static fn() => null;
         }
 

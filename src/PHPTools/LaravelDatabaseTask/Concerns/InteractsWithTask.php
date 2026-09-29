@@ -29,6 +29,11 @@ trait InteractsWithTask
         return __("database-task::tasks.title.{$taskName}");
     }
 
+    public function showOutputs(): bool
+    {
+        return true;
+    }
+
     public function preview(Contracts\InputInterface ...$inputs): Htmlable
     {
         $previewHtml = $this->handlePreview($this->filterInputs(...$inputs));
@@ -40,22 +45,46 @@ trait InteractsWithTask
         return $previewHtml;
     }
 
+    public function validate(Contracts\InputInterface ...$inputs): bool
+    {
+        return $this->handleValidate($this->filterInputs(...$inputs));
+    }
+
     public function run(Contracts\InputInterface ...$inputs): Contracts\OutputInterface
     {
         return $this->handleRun($this->filterInputs(...$inputs));
     }
 
-    public function showOutputs(): bool
+    public function getBatchableInputs(Contracts\InputInterface ...$inputs): iterable
     {
-        return true;
+        return $this->handleGetBatchableInputs($this->filterInputs(...$inputs));
+    }
+
+    public function mergeBatchableOutputs(Contracts\BatchableOutput ...$batchableOutputs): Contracts\OutputInterface
+    {
+        $sortedBatchableOutputs = collect($batchableOutputs)->sortBy(
+            static fn(Contracts\BatchableOutput $output): int => $output->getBatchOrder()
+        );
+
+        return $this->handleMergeBatchableOutputs($sortedBatchableOutputs);
     }
 
     protected function filterInputs(Contracts\InputInterface ...$inputs): Collection
     {
-        return $this->filterAndFillInputs(
-            collect(static::getSupportInputs())->keyBy->getName(),
-            collect($inputs)->keyBy->getName()
-        );
+        if ($this instanceof Contracts\BatchableTask) {
+            $inputs = collect($inputs)
+                ->sortByDesc(
+                    static fn(Contracts\InputInterface $input): int => $input instanceof Contracts\BatchableInput
+                        ? $input?->getBatchOrder() ?? 0
+                        : 0
+                )
+                ->groupBy->getName()
+                ->map->first();
+        } else {
+            $inputs = collect($inputs)->keyBy->getName();
+        }
+
+        return $this->filterAndFillInputs(collect(static::getSupportInputs())->keyBy->getName(), $inputs);
     }
 
     protected function filterAndFillInputs(Collection $supportInputs, Collection $inputs): Collection
@@ -66,13 +95,13 @@ trait InteractsWithTask
 
         /** @var Contracts\InputInterface | HasValidation $supportInput */
         foreach ($supportInputs as $name => $supportInput) {
+            $input = $inputs->pull($name);
+
             if (\in_array(HasValidation::class, class_uses_recursive($supportInput), true)) {
-                if ($supportInput->isRequired() && \is_null($inputs->get($name)?->getValue())) {
+                if ($supportInput->isRequired() && \is_null($input?->getValue())) {
                     throw new \InvalidArgumentException(__('validation.required', ['attribute' => $supportInput->getLabel()]));
                 }
             }
-
-            $input = $inputs->pull($name);
 
             $this->filteredInputs[$name] = $input;
             $this->namedInputInjections[Str::snake($name)] = $input;
@@ -93,7 +122,28 @@ trait InteractsWithTask
         return $this->typedInputInjections->all();
     }
 
-    abstract protected function handlePreview(Collection $inputs): Htmlable | string;
+    protected function handlePreview(Collection $filteredInputs): Htmlable | string
+    {
+        throw new \LogicException(static::class . '::handlePreview() not implemented.');
+    }
 
-    abstract protected function handleRun(Collection $inputs): Contracts\OutputInterface;
+    protected function handleValidate(Collection $filteredInputs): bool
+    {
+        throw new \LogicException(static::class . '::handleValidate() not implemented.');
+    }
+
+    protected function handleRun(Collection $filteredInputs): Contracts\OutputInterface
+    {
+        throw new \LogicException(static::class . '::handleRun() not implemented.');
+    }
+
+    protected function handleGetBatchableInputs(Collection $filteredInputs): iterable
+    {
+        throw new \LogicException(static::class . '::handleGetBatchableInputs() not implemented.');
+    }
+
+    protected function handleMergeBatchableOutputs(Collection $batchableOutputs): Contracts\OutputInterface
+    {
+        throw new \LogicException(static::class . '::handleMergeBatchableOutputs() not implemented.');
+    }
 }

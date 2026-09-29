@@ -12,7 +12,6 @@ class FileInput implements Contracts\InputInterface
     use Concerns\Input\AsFile {
         getValue as protected baseGetValue;
     }
-    use Concerns\InteractsWithStream;
 
     public function __construct(?string $filename = null, string $mode = 'w+')
     {

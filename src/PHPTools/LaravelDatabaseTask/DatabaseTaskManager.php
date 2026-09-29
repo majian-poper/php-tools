@@ -59,7 +59,7 @@ class DatabaseTaskManager
 
     public function arrayToInput(array $data, int $batchOrder = 0): ?Contracts\InputInterface
     {
-        if (! Arr::has($data, ['input_class', 'input_value', 'is_file', 'is_excluded'])) {
+        if (! Arr::has($data, ['input_class', 'input_value', 'is_excluded'])) {
             return null;
         }
 

@@ -42,7 +42,7 @@ class ProcessTask extends BatchJob implements ShouldQueue
 
     protected function saveOutput(Contracts\TaskInterface $task, Contracts\OutputInterface $output): bool
     {
-        if (! $task instanceof Contracts\BatchableTaskInterface) {
+        if (! $task instanceof Contracts\BatchableTask) {
             return $this->databaseTask->moveToProcessedStatus($output);
         }
 

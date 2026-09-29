@@ -14,8 +14,6 @@ trait AsFile
     use HasValidation;
     use HasValue;
 
-    protected bool | \Closure $canBeFile = false;
-
     public function asFile(): static
     {
         return $this->setType(InputType::FILE);

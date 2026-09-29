@@ -5,12 +5,13 @@ namespace PHPTools\LaravelDatabaseTask\Outputs;
 use PHPTools\LaravelDatabaseTask\Concerns;
 use PHPTools\LaravelDatabaseTask\Contracts;
 
-class FileOutput implements Contracts\OutputInterface
+class FileOutput implements Contracts\BatchableOutput
 {
     use Concerns\HasFileObject;
-    use Concerns\InteractsWithStream;
-    use Concerns\Output\AsFileOutput {
-        getValue as protected baseGetValue;
+    use Concerns\InteractsWithBatchable;
+    use Concerns\Output\HasExpires;
+    use Concerns\Output\HasValue {
+        getValue as protected hasValueGetValue;
     }
 
     public function __construct(?string $filename = null, string $mode = 'w+')
@@ -27,7 +28,7 @@ class FileOutput implements Contracts\OutputInterface
 
     public function getValue(): ?\SplFileObject
     {
-        $value = $this->baseGetValue();
+        $value = $this->hasValueGetValue();
 
         // 1. 设置了 value, 且 value 是 \SplFileObject 实例，则直接返回
         if ($value instanceof \SplFileObject) {

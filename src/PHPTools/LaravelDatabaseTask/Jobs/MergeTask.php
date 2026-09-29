@@ -16,7 +16,7 @@ class MergeTask extends BatchJob implements ShouldQueue
         try {
             $task = $this->getTask();
 
-            if (! $task instanceof Contracts\BatchableTaskInterface) {
+            if (! $task instanceof Contracts\BatchableTask) {
                 throw new \RuntimeException(__('database-task::tasks.errors.task_not_batchable'));
             }
 
