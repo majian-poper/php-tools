@@ -9,25 +9,13 @@ trait HasType
 {
     use EvaluatesClosures;
 
-    protected InputType $type = InputType::QUERY;
-
     protected bool | \Closure $isExcluded = false;
 
     protected bool | \Closure $canBeExcluded = false;
 
     protected bool | \Closure $canBeMultiple = false;
 
-    public function getType(): InputType
-    {
-        return $this->type;
-    }
-
-    protected function setType(InputType $type): static
-    {
-        $this->type = $type;
-
-        return $this;
-    }
+    abstract public function getType(): InputType;
 
     public function excluded(bool | \Closure $condition = true): static
     {

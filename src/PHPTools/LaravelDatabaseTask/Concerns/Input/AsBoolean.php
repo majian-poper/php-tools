@@ -3,6 +3,7 @@
 namespace PHPTools\LaravelDatabaseTask\Concerns\Input;
 
 use Illuminate\Support\Traits\Conditionable;
+use PHPTools\LaravelDatabaseTask\Concerns\HasValue;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 
 trait AsBoolean
@@ -13,8 +14,8 @@ trait AsBoolean
     use HasValidation;
     use HasValue;
 
-    public function asBoolean(): static
+    public function getType(): InputType
     {
-        return $this->setType(InputType::BOOLEAN);
+        return InputType::BOOLEAN;
     }
 }

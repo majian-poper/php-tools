@@ -3,6 +3,7 @@
 namespace PHPTools\LaravelDatabaseTask\Concerns\Input;
 
 use Illuminate\Support\Traits\Conditionable;
+use PHPTools\LaravelDatabaseTask\Concerns\HasValue;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 
 trait AsSelect
@@ -15,11 +16,16 @@ trait AsSelect
 
     protected array | \Closure $options = [];
 
+    public function getType(): InputType
+    {
+        return InputType::SELECT;
+    }
+
     public function asSelect(array | \Closure $options): static
     {
         $this->options = $options;
 
-        return $this->setType(InputType::SELECT);
+        return $this;
     }
 
     public function getOptions(): array

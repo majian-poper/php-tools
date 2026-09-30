@@ -15,6 +15,16 @@ use PHPTools\LaravelDatabaseTask\Models\DatabaseTaskInput;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTaskOutput;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * @template InputInterface of \PHPTools\LaravelDatabaseTask\Contracts\InputInterface
+ * @template AsBoolean of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsBoolean
+ * @template AsNumber of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsNumber
+ * @template AsSelect of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsSelect
+ * @template AsDateTime of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsDateTime
+ * @template AsFile of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile
+ *
+ * @template Input of InputInterface | AsBoolean | AsNumber | AsSelect | AsDateTime | AsFile
+ */
 class DatabaseTaskInfolist
 {
     /**
@@ -117,7 +127,7 @@ class DatabaseTaskInfolist
                 ->default('-') // 设置默认值, 避免 formatStateUsing 被跳过
                 ->formatStateUsing(
                     static function (DatabaseTaskInput $record, $state): string {
-                        /** @var \PHPTools\LaravelDatabaseTask\Contracts\InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\InteractsWithInput $input */
+                        /** @var Input $input */
                         $input = $record->toInput();
 
                         return match ($input->getType()) {

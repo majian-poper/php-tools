@@ -13,6 +13,16 @@ use PHPTools\LaravelDatabaseTask\Enums\InputType;
 use PHPTools\LaravelDatabaseTask\Enums\TaskRisk;
 use PHPTools\LaravelDatabaseTask\Inputs\ChunkInput;
 
+/**
+ * @template AsBoolean of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsBoolean
+ * @template AsNumber of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsNumber
+ * @template AsSelect of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsSelect
+ * @template AsDateTime of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsDateTime
+ * @template AsFile of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile
+ * @template HasNaming of \PHPTools\LaravelDatabaseTask\Concerns\Input\HasNaming
+ *
+ * @template Input of InputInterface | AsBoolean | AsNumber | AsSelect | AsDateTime | AsFile | HasNaming
+ */
 class DatabaseTaskForm
 {
     /**
@@ -66,7 +76,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\HasNaming $input
+     * @param Input $input
      */
     protected static function makeFieldsetFor(InputInterface $input): Schemas\Components\Fieldset
     {
@@ -84,7 +94,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\InteractsWithInput $input
+     * @param Input $input
      */
     protected static function makeInputValueField(InputInterface $input): Forms\Components\Field
     {
@@ -122,7 +132,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsNumber $input
+     * @param InputInterface | AsNumber $input
      */
     protected static function makeNumberField(InputInterface $input): Forms\Components\Field
     {
@@ -132,7 +142,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsSelect $input
+     * @param InputInterface | AsSelect $input
      */
     protected static function makeSelectField(InputInterface $input): Forms\Components\Field
     {
@@ -143,7 +153,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsDateTime $input
+     * @param InputInterface | AsDateTime $input
      */
     protected static function makeDatetimeField(InputInterface $input): Forms\Components\Field
     {
@@ -153,6 +163,9 @@ class DatabaseTaskForm
             ->displayFormat($input->getDisplayFormat());
     }
 
+    /**
+     * @param InputInterface | AsFile $input
+     */
     protected static function makeFileField(InputInterface $input): Forms\Components\Field
     {
         return Forms\Components\FileUpload::make('input_value')
@@ -164,7 +177,7 @@ class DatabaseTaskForm
 
     /**
      * TODO: 支持可排除字段
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\InteractsWithInput $input
+     * @param Input $input
      */
     protected static function makeIsExcludedField(InputInterface $input): Forms\Components\Field
     {

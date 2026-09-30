@@ -77,7 +77,7 @@ class DatabaseTaskManager
         * AsBoolean       => bool                     e.g. true | false
         * AsSelect        => array<string | int>      e.g. ["foo", "bar"] | [1, 2, 3]
         * AsDateTime      => string                   e.g. "2023-01-01 00:00:00" | "2023-01-01"
-        * AsFile          => TemporaryUploadedFile | \SplFileObject.
+        * AsFile          => TemporaryUploadedFile
         */
 
         $value = $data['input_value'];
