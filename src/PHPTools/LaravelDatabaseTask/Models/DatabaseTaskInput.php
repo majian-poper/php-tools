@@ -76,7 +76,7 @@ class DatabaseTaskInput extends Model implements HasMedia
 
     public static function fromInput(Contracts\InputInterface $input, ?DatabaseTask $databaseTask = null): static
     {
-        $value = ($input instanceof FileInput ? $input->getRawValue() : null) ?? $input->getValue();
+        $value = ($input instanceof FileInput ? $input->getUploadedFile() : null) ?? $input->getValue();
         $isFile = DatabaseTaskFacade::valueIsFile($value);
         $batchOrder = $input instanceof Contracts\BatchableInput ? $input->getBatchOrder() : 0;
 
@@ -111,12 +111,8 @@ class DatabaseTaskInput extends Model implements HasMedia
         /** @var FileInput | Contracts\InputInterface $input */
         $input = app($this->input_class);
 
-        if ($isFile) {
-            $input->asFile()->stream(fn() => $this->file->stream());
-        }
-
         if (\method_exists($input, 'value')) {
-            $input->value($isFile ? null : $this->input_value);
+            $input->value($isFile ? fn() => $this->file->stream() : $this->input_value);
         }
 
         if (\method_exists($input, 'excluded')) {

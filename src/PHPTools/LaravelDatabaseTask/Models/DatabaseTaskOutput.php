@@ -108,20 +108,16 @@ class DatabaseTaskOutput extends Model implements HasMedia
         /** @var FileOutput | TextOutput | NullOutput $output */
         $output = app($this->output_class);
 
-        if ($isFile) {
-            $output->stream(fn() => $this->file->stream());
-        }
-
         if (\method_exists($output, 'value')) {
-            $output->value($isFile ? null : $this->output_value);
-        }
-
-        if ($output instanceof Contracts\BatchableOutput && \method_exists($output, 'batchOrder')) {
-            $output->batchOrder($this->batch_order);
+            $output->value($isFile ? fn() => $this->file->stream() : $this->output_value);
         }
 
         if (\method_exists($output, 'expiresAt')) {
             $output->expiresAt($this->expires_at);
+        }
+
+        if ($output instanceof Contracts\BatchableOutput && \method_exists($output, 'batchOrder')) {
+            $output->batchOrder($this->batch_order);
         }
 
         return $this->outputInstance = $output;

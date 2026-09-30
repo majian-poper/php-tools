@@ -9,8 +9,8 @@ class TextOutput implements Contracts\BatchableOutput
 {
     use Concerns\InteractsWithBatchable;
     use Concerns\Output\HasExpires;
-    use Concerns\Output\HasValue {
-        getValue as protected hasValueGetValue;
+    use Concerns\HasValue {
+        getValue as protected baseGetValue;
     }
 
     public function __construct(string $text = '')
@@ -20,10 +20,10 @@ class TextOutput implements Contracts\BatchableOutput
 
     public function getValue(): string
     {
-        $value = $this->hasValueGetValue();
+        $value = $this->baseGetValue();
 
-        if (\is_string($value)) {
-            return $value;
+        if (\is_scalar($value) || $value instanceof \Stringable) {
+            return (string) $value;
         }
 
         return '';
