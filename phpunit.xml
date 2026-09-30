@@ -14,6 +14,9 @@
         <testsuite name="LaravelCsvParser">
             <directory>tests/LaravelCsvParser</directory>
         </testsuite>
+        <testsuite name="LaravelDatabaseTask">
+            <directory>tests/LaravelDatabaseTask</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

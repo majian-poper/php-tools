@@ -42,6 +42,10 @@ class DatabaseTaskServiceProvider extends ServiceProvider
     {
         $vendorMigrations = __DIR__ . '/files/migrations';
 
+        if ($this->app->environment('testing')) {
+            $this->loadMigrationsFrom($vendorMigrations);
+        }
+
         if (! $this->app->runningInConsole()) {
             return;
         }
