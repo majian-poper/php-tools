@@ -59,7 +59,6 @@ return [
         'task_not_batchable' => 'Task is not batchable.',
         'no_batchable_inputs' => 'No batchable inputs found.',
         'output_not_batchable' => 'Output is not batchable.',
-        'output_batch_order_mismatch' => 'Batch order of the output does not match the job.',
         'merge_batchable_outputs_failed' => 'Failed to merge batchable outputs.',
         'output_should_not_be_batchable' => 'Output should not be batchable.',
         'no_data' => 'No data found for the task.',

@@ -15,7 +15,9 @@ class TextOutput implements Contracts\BatchableOutput
 
     public function __construct(string $text = '')
     {
-        $this->value($text);
+        if (filled($text)) {
+            $this->value($text);
+        }
     }
 
     public function getValue(): string

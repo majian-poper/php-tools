@@ -19,7 +19,7 @@ class DispatchProcessJobCommand extends Command
 
     protected $description = 'Dispatch process database task jobs.';
 
-    public function handle()
+    public function handle(): int
     {
         /** @var \Illuminate\Database\Eloquent\Builder $query */
         $query = DatabaseTaskFacade::resolveModel(Models\DatabaseTask::class)
@@ -36,6 +36,8 @@ class DispatchProcessJobCommand extends Command
         if ((clone $query)->exists()) {
             Artisan::queue('task:dispatch-process-job')->delay(config('database-task.queue.delay'));
         }
+
+        return 0;
     }
 
     protected function dispatchJob(Models\DatabaseTask $databaseTask): void

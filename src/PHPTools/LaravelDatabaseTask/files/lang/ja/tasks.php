@@ -59,7 +59,6 @@ return [
         'task_not_batchable' => 'タスクはバッチ処理不可です。',
         'no_batchable_inputs' => 'バッチ処理可能な入力が見つかりませんでした。',
         'output_not_batchable' => '出力データはバッチ処理できません。',
-        'output_batch_order_mismatch' => '出力データのバッチ順序がジョブと一致しません。',
         'merge_batchable_outputs_failed' => '出力データのマージ操作が失敗しました。',
         'output_should_not_be_batchable' => '出力データはバッチ処理に適していません。',
         'no_data' => '該当するデータがありませんでした。',

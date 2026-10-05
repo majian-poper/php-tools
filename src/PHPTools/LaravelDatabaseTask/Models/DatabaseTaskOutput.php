@@ -112,7 +112,7 @@ class DatabaseTaskOutput extends Model implements HasMedia
             $output->value($isFile ? fn() => $this->file->stream() : $this->output_value);
         }
 
-        if (\method_exists($output, 'expiresAt')) {
+        if (\method_exists($output, 'expiresAt') && isset($this->expires_at)) {
             $output->expiresAt($this->expires_at);
         }
 

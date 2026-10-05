@@ -23,12 +23,13 @@ abstract class BatchJob
 
     public int $tries;
 
-    public function __construct(protected readonly Models\DatabaseTask $databaseTask)
+    public function __construct(protected readonly Models\DatabaseTask $databaseTask, protected readonly int $batchOrder = 0)
     {
         $this->task = $task = $databaseTask->toTask();
 
         $this->timeout = \method_exists($task, 'timeout') ? $task->timeout() : config('database-task.queue.timeout', 60);
         $this->tries = \method_exists($task, 'tries') ? $task->tries() : config('database-task.queue.tries', 3);
+        $this->delay = $task instanceof Contracts\DelayableTask ? $task->delay($this->batchOrder) : 0;
     }
 
     public function displayName(): string

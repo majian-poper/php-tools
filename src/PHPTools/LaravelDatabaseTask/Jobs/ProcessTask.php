@@ -6,15 +6,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Enums;
 use PHPTools\LaravelDatabaseTask\Events;
-use PHPTools\LaravelDatabaseTask\Models;
 
 class ProcessTask extends BatchJob implements ShouldQueue
 {
-    public function __construct(Models\DatabaseTask $databaseTask, protected readonly int $batchOrder)
-    {
-        parent::__construct($databaseTask);
-    }
-
     public function handle(): void
     {
         Events\TaskProcessing::dispatch($this->databaseTask, $this->batchOrder);
@@ -29,6 +23,10 @@ class ProcessTask extends BatchJob implements ShouldQueue
                 ->map->toInput();
 
             $output = $task->run(...$inputs->all());
+
+            if (\method_exists($output, 'batchOrder')) {
+                $output->batchOrder($this->batchOrder);
+            }
 
             $this->saveOutput($task, $output);
 
@@ -48,10 +46,6 @@ class ProcessTask extends BatchJob implements ShouldQueue
 
         if (! $output instanceof Contracts\BatchableOutput) {
             throw new \RuntimeException(__('database-task::tasks.errors.output_not_batchable'));
-        }
-
-        if ($output->getBatchOrder() !== $this->batchOrder) {
-            throw new \RuntimeException(__('database-task::tasks.errors.output_batch_order_mismatch'));
         }
 
         return $this->databaseTask->saveOutput($output);

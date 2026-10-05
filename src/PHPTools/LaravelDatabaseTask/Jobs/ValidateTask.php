@@ -6,15 +6,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Enums;
 use PHPTools\LaravelDatabaseTask\Events;
-use PHPTools\LaravelDatabaseTask\Models;
 
 class ValidateTask extends BatchJob implements ShouldQueue
 {
-    public function __construct(Models\DatabaseTask $databaseTask, protected readonly int $batchOrder)
-    {
-        parent::__construct($databaseTask);
-    }
-
     public function handle(): void
     {
         Events\TaskValidating::dispatch($this->databaseTask);

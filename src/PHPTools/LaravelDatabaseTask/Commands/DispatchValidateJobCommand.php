@@ -18,7 +18,7 @@ class DispatchValidateJobCommand extends Command
 
     protected $description = 'dispatch validate database task jobs.';
 
-    public function handle()
+    public function handle(): int
     {
         /** @var \Illuminate\Database\Eloquent\Builder $query */
         $query = DatabaseTaskFacade::resolveModel(Models\DatabaseTask::class)
@@ -34,6 +34,8 @@ class DispatchValidateJobCommand extends Command
         if ((clone $query)->exists()) {
             Artisan::queue('task:dispatch-validate-job')->delay(config('database-task.queue.delay'));
         }
+
+        return 0;
     }
 
     protected function dispatchJob(Models\DatabaseTask $databaseTask): void
