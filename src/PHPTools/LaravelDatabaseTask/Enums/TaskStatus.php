@@ -6,15 +6,15 @@ enum TaskStatus: string
 {
     use Concerns\HasLabel;
 
+    case CREATED = 'created';
+
     case VALIDATING = 'validating';
 
-    case UNAPPLIED = 'unapplied';
+    case VALIDATED = 'validated';
 
-    case PENDING = 'pending';
+    case REQUESTED = 'requested';
 
-    case APPROVED = 'approved';
-
-    case REJECTED = 'rejected';
+    case READY = 'ready';
 
     case PROCESSING = 'processing';
 
@@ -25,13 +25,13 @@ enum TaskStatus: string
     public function getFilamentColor(): string
     {
         return match ($this) {
+            static::CREATED => 'gray',
             static::VALIDATING => 'info',
-            static::UNAPPLIED => 'gray',
-            static::PENDING => 'warning',
+            static::VALIDATED => 'success',
+            static::REQUESTED => 'warning',
+            static::READY => 'info',
             static::PROCESSING => 'primary',
-            static::APPROVED => 'success',
             static::PROCESSED => 'success',
-            static::REJECTED => 'danger',
             static::FAILED => 'danger',
         };
     }

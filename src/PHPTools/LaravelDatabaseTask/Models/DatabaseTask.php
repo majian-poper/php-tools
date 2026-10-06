@@ -8,10 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Enums;
-use PHPTools\LaravelDatabaseTask\Events;
 use PHPTools\LaravelDatabaseTask\Facades\DatabaseTaskFacade;
 use PHPTools\LaravelDatabaseTask\Inputs\FileInput;
 use PHPTools\LaravelDatabaseTask\Outputs\TextOutput;
@@ -157,62 +155,88 @@ class DatabaseTask extends Model
 
     // --- Status Management ---
 
-    public function moveToStatus(Enums\TaskStatus $to, ?Enums\TaskStatus $from = null): bool
+    public function changeStatus(Enums\TaskStatus $to, ?Enums\TaskStatus $from = null): bool
     {
-        return $this->transactionCallback(
+        $changed = $this->transactionCallback(
             fn(): bool => $this->newQuery()
                 ->whereKey($this->getKey())
                 ->when(filled($from), static fn($query) => $query->where('status', $from))
                 ->lockForUpdate()
                 ->update(['status' => $to]) > 0
         );
+
+        if ($changed) {
+            $this->setAttribute('status', $to)->syncChanges();
+        }
+
+        return $changed;
     }
 
-    public function moveToFailedStatus(string $reason): bool
+    public function toValidating(): bool
     {
         return $this->transactionCallback(
-            fn(): bool => $this->moveToStatus(Enums\TaskStatus::FAILED) && $this->saveOutput(new TextOutput($reason))
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::VALIDATING, Enums\TaskStatus::CREATED)
         );
     }
 
-    public function moveToUnappliedStatus(): bool
-    {
-        return $this->transactionCallback(fn(): bool => $this->moveToStatus(Enums\TaskStatus::UNAPPLIED));
-    }
-
-    public function moveToProcessedStatus(Contracts\OutputInterface $output): bool
+    public function toValidated(): bool
     {
         return $this->transactionCallback(
-            fn(): bool => $this->moveToStatus(Enums\TaskStatus::PROCESSED) && $this->saveOutput($output)
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::VALIDATED, Enums\TaskStatus::VALIDATING)
+        );
+    }
+
+    public function toRequested(): bool
+    {
+        return $this->transactionCallback(
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::REQUESTED, Enums\TaskStatus::VALIDATED)
+        );
+    }
+
+    public function toReady(): bool
+    {
+        return $this->transactionCallback(
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::READY, Enums\TaskStatus::REQUESTED)
+        );
+    }
+
+    public function toProcessing(): bool
+    {
+        return $this->transactionCallback(
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::PROCESSING, Enums\TaskStatus::READY)
+        );
+    }
+
+    public function toProcessed(Contracts\OutputInterface $output): bool
+    {
+        return $this->transactionCallback(
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::PROCESSED, Enums\TaskStatus::PROCESSING)
+                && $this->saveOutput($output)
+        );
+    }
+
+    public function toFailed(string $reason): bool
+    {
+        return $this->transactionCallback(
+            fn(): bool => $this->changeStatus(Enums\TaskStatus::FAILED) && $this->saveOutput(new TextOutput($reason))
         );
     }
 
     // --- Task actions ---
 
+    public function requestable(): bool
+    {
+        return $this->status === Enums\TaskStatus::VALIDATED;
+    }
+
     public function previewable(): bool
     {
-        return \in_array($this->status, [Enums\TaskStatus::VALIDATING, Enums\TaskStatus::UNAPPLIED, Enums\TaskStatus::PENDING]) || ! $this->outputs()->exists();
+        return $this->status !== Enums\TaskStatus::FAILED;
     }
 
     public function preview(): Htmlable
     {
         return $this->toTask()->preview(...$this->normal_inputs()->get()->map->toInput()->all());
-    }
-
-    public function requestable(): bool
-    {
-        return $this->status === Enums\TaskStatus::UNAPPLIED;
-    }
-
-    public function request(): bool
-    {
-        $result = $this->moveToStatus(Enums\TaskStatus::PENDING);
-
-        if ($result) {
-            Events\TaskRequested::dispatch($this, Auth::user());
-        }
-
-        return $result;
     }
 
     // --- Relationships ---

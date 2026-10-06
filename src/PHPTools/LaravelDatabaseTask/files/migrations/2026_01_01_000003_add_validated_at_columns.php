@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,6 +16,11 @@ return new class extends Migration
             Schema::table('database_task_inputs', function (Blueprint $table) {
                 $table->timestamp('validated_at')->nullable()->after('batch_order');
             });
+
+            DB::table('database_tasks')->where('status', 'unapplied')->update(['status' => 'validated']);
+            DB::table('database_tasks')->where('status', 'pending')->update(['status' => 'requested']);
+            DB::table('database_tasks')->where('status', 'approved')->update(['status' => 'ready']);
+            DB::table('database_tasks')->where('status', 'rejected')->update(['status' => 'failed']);
         }
     }
 

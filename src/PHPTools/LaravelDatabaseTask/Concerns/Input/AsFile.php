@@ -9,10 +9,10 @@ use PHPTools\LaravelDatabaseTask\Enums\InputType;
 trait AsFile
 {
     use Conditionable;
+    use HasFileValue;
     use HasNaming;
     use HasType;
     use HasValidation;
-    use HasFileValue;
 
     public function getType(): InputType
     {

@@ -7,11 +7,11 @@ use PHPTools\LaravelDatabaseTask\Contracts;
 
 class TextOutput implements Contracts\BatchableOutput
 {
-    use Concerns\InteractsWithBatchable;
-    use Concerns\Output\HasExpires;
     use Concerns\HasValue {
         getValue as protected baseGetValue;
     }
+    use Concerns\InteractsWithBatchable;
+    use Concerns\Output\HasExpires;
 
     public function __construct(string $text = '')
     {

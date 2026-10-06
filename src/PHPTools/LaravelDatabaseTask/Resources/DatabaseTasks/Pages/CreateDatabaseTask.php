@@ -94,10 +94,14 @@ class CreateDatabaseTask extends CreateRecord
 
         $taskModel
             ->user()->associate(Auth::user())
-            ->setAttribute('status', $shouldValidate ? Enums\TaskStatus::VALIDATING : Enums\TaskStatus::UNAPPLIED)
+            ->setAttribute('status', $shouldValidate ? Enums\TaskStatus::CREATED : Enums\TaskStatus::VALIDATED)
             ->save();
 
-        $taskModel->saveInputs(...$inputs->all());
+        $inputsSaved = $taskModel->saveInputs(...$inputs->all());
+
+        if (! $inputsSaved) {
+            throw new \RuntimeException('Failed to save inputs.');
+        }
 
         $shouldValidate && Artisan::queue('task:dispatch-validate-job');
 

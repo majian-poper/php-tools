@@ -17,7 +17,7 @@ class ValidateTask extends BatchJob implements ShouldQueue
             $task = $this->getTask();
 
             if (! $task instanceof Contracts\ShouldValidate) {
-                throw new \RuntimeException(__('database-task::tasks.errors.task_not_batchable'));
+                throw new \RuntimeException(__('database-task::tasks.errors.task_not_validatable'));
             }
 
             $inputModels = $this->databaseTask->inputs()
@@ -27,17 +27,19 @@ class ValidateTask extends BatchJob implements ShouldQueue
 
             $validated = $task->validate(...$inputModels->map->toInput()->all());
 
-            $query = $this->databaseTask->inputs()->where('batch_order', $this->batchOrder);
+            $query = $this->databaseTask->inputs()->whereIn('batch_order', \array_unique([0, $this->batchOrder]));
 
             if ($validated) {
                 $query->whereNull('validated_at')->update(['validated_at' => now()]);
             } else {
                 $query->update(['validated_at' => null]);
+
+                throw new \RuntimeException(__('database-task::tasks.task_validate_failed'));
             }
 
             Events\TaskValidated::dispatch($this->databaseTask, $this->batchOrder);
         } catch (\Throwable $e) {
-            $this->databaseTask->moveToFailedStatus($e->getMessage());
+            $this->databaseTask->toFailed($e->getMessage());
 
             Events\TaskValidateFailed::dispatch($this->databaseTask, $this->batchOrder, $e);
         }

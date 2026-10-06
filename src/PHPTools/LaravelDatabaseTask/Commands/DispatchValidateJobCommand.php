@@ -5,6 +5,7 @@ namespace PHPTools\LaravelDatabaseTask\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Enums\TaskStatus;
 use PHPTools\LaravelDatabaseTask\Events;
@@ -24,11 +25,13 @@ class DispatchValidateJobCommand extends Command
         $query = DatabaseTaskFacade::resolveModel(Models\DatabaseTask::class)
             ->newQuery()
             ->whereHas('inputs')
-            ->where('status', TaskStatus::VALIDATING)
+            ->where('status', TaskStatus::CREATED)
             ->orderBy('id');
 
         if (filled($databaseTask = (clone $query)->first())) {
-            $this->dispatchJob($databaseTask);
+            Cache::lock("{$this->signature}:{$databaseTask->id}", config('database-task.queue.timeout'))->get(
+                fn() => $this->dispatchJob($databaseTask)
+            );
         }
 
         if ((clone $query)->exists()) {
@@ -40,6 +43,8 @@ class DispatchValidateJobCommand extends Command
 
     protected function dispatchJob(Models\DatabaseTask $databaseTask): void
     {
+        Events\TaskValidating::dispatch($databaseTask, 0);
+
         $task = $databaseTask->toTask();
 
         if (! $task instanceof Contracts\TaskInterface) {
@@ -48,7 +53,19 @@ class DispatchValidateJobCommand extends Command
             return;
         }
 
-        Events\TaskValidating::dispatch($databaseTask);
+        if (! $databaseTask->toValidating()) {
+            $this->dispatchFailed($databaseTask, __('database-task::tasks.errors.task_status_update_failed'));
+
+            return;
+        }
+
+        if (! $task instanceof Contracts\ShouldValidate) {
+            $databaseTask->toValidated()
+                ? Events\TaskValidated::dispatch($databaseTask, 0)
+                : $this->dispatchFailed($databaseTask, __('database-task::tasks.errors.task_status_update_failed'));
+
+            return;
+        }
 
         $databaseTask->inputs()->update(['validated_at' => null]);
 
@@ -57,8 +74,6 @@ class DispatchValidateJobCommand extends Command
             ->add($this->jobsFor($databaseTask))
             ->then($this->thenFor($databaseTask))
             ->dispatch();
-
-        Events\TaskValidated::dispatch($databaseTask);
     }
 
     protected function jobsFor(Models\DatabaseTask $databaseTask): array
@@ -74,13 +89,25 @@ class DispatchValidateJobCommand extends Command
 
     protected function thenFor(Models\DatabaseTask $databaseTask): \Closure
     {
-        return static fn() => $databaseTask->moveToUnappliedStatus();
+        return static function () use ($databaseTask) {
+            $success = $databaseTask->inputs()->whereNull('validated_at')->doesntExist()
+                ? $databaseTask->toValidated()
+                : false;
+
+            if ($success) {
+                Events\TaskValidated::dispatch($databaseTask, 0);
+            } else {
+                $databaseTask->toFailed($reason = __('database-task::tasks.task_validate_failed'));
+
+                Events\TaskValidateFailed::dispatch($databaseTask, 0, new \RuntimeException($reason));
+            }
+        };
     }
 
     protected function dispatchFailed(Models\DatabaseTask $databaseTask, string $reason): void
     {
-        $databaseTask->moveToFailedStatus($reason);
+        $databaseTask->toFailed($reason);
 
-        Events\TaskValidateFailed::dispatch($databaseTask, new \RuntimeException($reason));
+        Events\TaskValidateFailed::dispatch($databaseTask, 0, new \RuntimeException($reason));
     }
 }

@@ -32,11 +32,11 @@ class MergeTask extends BatchJob implements ShouldQueue
                 throw new \RuntimeException(__('database-task::tasks.errors.output_should_not_be_batchable'));
             }
 
-            $this->databaseTask->moveToProcessedStatus($mergedOutput);
+            $this->databaseTask->toProcessed($mergedOutput);
 
             Events\TaskMerged::dispatch($this->databaseTask);
         } catch (\Throwable $e) {
-            $this->databaseTask->moveToFailedStatus($e->getMessage());
+            $this->databaseTask->toFailed($e->getMessage());
 
             Events\TaskMergeFailed::dispatch($this->databaseTask, $e);
         }

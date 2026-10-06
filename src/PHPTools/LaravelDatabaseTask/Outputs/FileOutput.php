@@ -7,9 +7,9 @@ use PHPTools\LaravelDatabaseTask\Contracts;
 
 class FileOutput implements Contracts\BatchableOutput
 {
+    use Concerns\HasFileValue;
     use Concerns\InteractsWithBatchable;
     use Concerns\Output\HasExpires;
-    use Concerns\HasFileValue;
 
     public function __construct(?string $filename = null, ?string $mode = null)
     {

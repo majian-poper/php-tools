@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->string('risk')->default(Enums\TaskRisk::MEDIUM->value);
-            $table->string('status')->default(Enums\TaskStatus::UNAPPLIED->value);
+            $table->string('status')->default(Enums\TaskStatus::CREATED->value);
             $table->timestamp('schedules_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

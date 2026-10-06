@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Enums\TaskStatus;
 use PHPTools\LaravelDatabaseTask\Events;
@@ -25,12 +26,14 @@ class DispatchProcessJobCommand extends Command
         $query = DatabaseTaskFacade::resolveModel(Models\DatabaseTask::class)
             ->newQuery()
             ->whereHas('inputs')
-            ->where('status', TaskStatus::APPROVED)
+            ->where('status', TaskStatus::READY)
             ->where(static fn(Builder $query) => $query->whereNull('schedules_at')->orWhere('schedules_at', '<=', now()))
             ->orderBy('id');
 
         if (filled($databaseTask = (clone $query)->first())) {
-            $this->dispatchJob($databaseTask);
+            Cache::lock("{$this->signature}:{$databaseTask->id}", config('database-task.queue.timeout'))->get(
+                fn() => $this->dispatchJob($databaseTask)
+            );
         }
 
         if ((clone $query)->exists()) {
@@ -42,6 +45,8 @@ class DispatchProcessJobCommand extends Command
 
     protected function dispatchJob(Models\DatabaseTask $databaseTask): void
     {
+        Events\TaskDispatching::dispatch($databaseTask);
+
         $task = $databaseTask->toTask();
 
         if (! $task instanceof Contracts\TaskInterface) {
@@ -50,7 +55,7 @@ class DispatchProcessJobCommand extends Command
             return;
         }
 
-        if (! $databaseTask->moveToStatus(to: TaskStatus::PROCESSING, from: TaskStatus::APPROVED)) {
+        if (! $databaseTask->toProcessing()) {
             $this->dispatchFailed($databaseTask, __('database-task::tasks.errors.task_status_update_failed'));
 
             return;
@@ -63,6 +68,8 @@ class DispatchProcessJobCommand extends Command
             ->add($this->jobsFor($databaseTask))
             ->then($this->thenFor($databaseTask))
             ->dispatch();
+
+        Events\TaskDispatched::dispatch($databaseTask);
     }
 
     protected function jobsFor(Models\DatabaseTask $databaseTask): array
@@ -87,8 +94,8 @@ class DispatchProcessJobCommand extends Command
 
     protected function dispatchFailed(Models\DatabaseTask $databaseTask, string $reason): void
     {
-        $databaseTask->moveToFailedStatus($reason);
+        $databaseTask->toFailed($reason);
 
-        Events\TaskProcessFailed::dispatch($databaseTask, new \RuntimeException($reason));
+        Events\TaskDispatchFailed::dispatch($databaseTask, new \RuntimeException($reason));
     }
 }

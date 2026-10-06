@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\Skip;
+use Illuminate\Queue\SerializesModels;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Models;
 
@@ -16,6 +17,7 @@ abstract class BatchJob
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use SerializesModels;
 
     public ?Contracts\TaskInterface $task;
 

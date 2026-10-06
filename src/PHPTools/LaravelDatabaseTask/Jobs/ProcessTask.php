@@ -32,7 +32,7 @@ class ProcessTask extends BatchJob implements ShouldQueue
 
             Events\TaskProcessed::dispatch($this->databaseTask, $this->batchOrder);
         } catch (\Throwable $e) {
-            $this->databaseTask->moveToFailedStatus($e->getMessage());
+            $this->databaseTask->toFailed($e->getMessage());
 
             Events\TaskProcessFailed::dispatch($this->databaseTask, $this->batchOrder, $e);
         }
@@ -41,7 +41,7 @@ class ProcessTask extends BatchJob implements ShouldQueue
     protected function saveOutput(Contracts\TaskInterface $task, Contracts\OutputInterface $output): bool
     {
         if (! $task instanceof Contracts\BatchableTask) {
-            return $this->databaseTask->moveToProcessedStatus($output);
+            return $this->databaseTask->toProcessed($output);
         }
 
         if (! $output instanceof Contracts\BatchableOutput) {
