@@ -196,6 +196,16 @@ class CommaSeparatedValues extends \SplFileObject implements CommaSeparatedValue
         return $this->headers ??= [];
     }
 
+    /**
+     * Read CSV rows one by one as a generator.
+     *
+     * Yield shape:
+     *  - key:   int   The 1-based CSV file row number (header row is row 1, never yielded).
+     *  - value: array<string, ?string>            when OPTION_WITH_HEADER is true (header -> cell value).
+     *           array<int, ?string>               when OPTION_WITH_HEADER is false (column index -> cell value).
+     *
+     * @return \Generator<int, array<string, ?string>|array<int, ?string>>
+     */
     public function readRow(array $options = []): \Generator
     {
         $formated = $this->formatOptions($options);
@@ -273,6 +283,24 @@ class CommaSeparatedValues extends \SplFileObject implements CommaSeparatedValue
         }
     }
 
+    /**
+     * Read CSV rows grouped into chunks of the given size.
+     *
+     * Wraps {@see self::readRow()} and yields once `$size` rows have been
+     * collected. A trailing partial chunk is yielded when fewer than `$size`
+     * rows remain.
+     *
+     * Yield shape:
+     *  - key:   int                                         The 0-based chunk index.
+     *  - value: array<int, array<string, ?string>>          Chunks when OPTION_WITH_HEADER is true;
+     *                                                        keys inside each chunk are the same 1-based
+     *                                                        CSV row numbers yielded by readRow().
+     *           array<int, array<int, ?string>>             Chunks when OPTION_WITH_HEADER is false.
+     *
+     * @return \Generator<int, array<int, array<string, ?string>|array<int, ?string>>>
+     *
+     * @throws \InvalidArgumentException When $size is not a positive integer.
+     */
     public function readRows(int $size, array $options = []): \Generator
     {
         if ($size <= 0) {
