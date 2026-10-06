@@ -11,7 +11,7 @@ class ValidateTask extends BatchJob implements ShouldQueue
 {
     public function handle(): void
     {
-        Events\TaskValidating::dispatch($this->databaseTask);
+        Events\TaskValidating::dispatch($this->databaseTask, $this->batchOrder);
 
         try {
             $task = $this->getTask();
