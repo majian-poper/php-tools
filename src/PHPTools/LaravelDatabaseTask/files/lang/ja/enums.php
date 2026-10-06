@@ -9,10 +9,11 @@ return [
     ],
 
     'task_status' => [
-        'UNAPPLIED' => '未申請',
-        'PENDING' => '申請中',
-        'APPROVED' => '承認済み',
-        'REJECTED' => '拒否済み',
+        'CREATED' => '作成済み',
+        'VALIDATING' => '検証中',
+        'VALIDATED' => '検証済み',
+        'REQUESTED' => '申請中',
+        'READY' => '処理待ち',
         'PROCESSING' => '処理中',
         'PROCESSED' => '処理済み',
         'FAILED' => '処理失敗',

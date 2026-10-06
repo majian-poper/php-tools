@@ -1,11 +1,12 @@
 <?php
 
-namespace PHPTools\LaravelDatabaseTask\Outputs;
+namespace PHPTools\LaravelDatabaseTask\Inputs;
 
 use PHPTools\LaravelDatabaseTask\Concerns;
 use PHPTools\LaravelDatabaseTask\Contracts;
 
-class BatchableTextOutput extends TextOutput implements Contracts\BatchableOutput
+class ChunkInput implements Contracts\BatchableInput
 {
+    use Concerns\Input\AsNumber;
     use Concerns\InteractsWithBatchable;
 }

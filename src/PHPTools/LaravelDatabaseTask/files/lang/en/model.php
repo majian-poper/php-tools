@@ -5,6 +5,7 @@ return [
     'id' => 'ID',
     'created_at' => 'Created at',
     'updated_at' => 'Updated at',
+    'deleted_at' => 'Deleted at',
 
     'database_task' => [
         'label' => 'DB task',
@@ -40,10 +41,6 @@ return [
         'label' => 'Task output',
         'output_value' => 'Output value',
         'expires_at' => 'Expires at',
-
-        'actions' => [
-            'download' => 'Download',
-        ],
     ],
 
     'database_task_class' => [
@@ -51,6 +48,12 @@ return [
 
         'actions' => [
             'create' => 'Create',
+        ],
+    ],
+
+    'database_task_file' => [
+        'actions' => [
+            'download' => 'Download',
         ],
     ],
 

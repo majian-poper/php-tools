@@ -5,7 +5,7 @@ namespace PHPTools\LaravelDatabaseTask\Events;
 use Illuminate\Foundation\Events\Dispatchable;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTask;
 
-class BatchableTaskDispatching
+class TaskDispatched
 {
     use Dispatchable;
 

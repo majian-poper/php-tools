@@ -2,14 +2,20 @@
 
 namespace PHPTools\LaravelDatabaseTask\Concerns\Input;
 
+use Illuminate\Support\Traits\Conditionable;
+use PHPTools\LaravelDatabaseTask\Concerns\HasValue;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 
 trait AsNumber
 {
-    use AsFile;
+    use Conditionable;
+    use HasNaming;
+    use HasType;
+    use HasValidation;
+    use HasValue;
 
-    public function asNumber(): static
+    public function getType(): InputType
     {
-        return $this->setType(InputType::NUMBER);
+        return InputType::NUMBER;
     }
 }

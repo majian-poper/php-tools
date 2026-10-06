@@ -5,33 +5,23 @@ namespace PHPTools\LaravelDatabaseTask\Outputs;
 use PHPTools\LaravelDatabaseTask\Concerns;
 use PHPTools\LaravelDatabaseTask\Contracts;
 
-class FileOutput extends \SplFileObject implements Contracts\OutputInterface
+class FileOutput implements Contracts\BatchableOutput
 {
-    use Concerns\InteractsWithStream;
-    use Concerns\Output\AsFileOutput {
-        getValue as protected baseGetValue;
-    }
+    use Concerns\HasFileValue;
+    use Concerns\InteractsWithBatchable;
+    use Concerns\Output\HasExpires;
 
-    protected bool $autoDelete = true;
-
-    public function __destruct()
+    public function __construct(?string $filename = null, ?string $mode = null)
     {
-        if ($this->autoDelete && $this->isWritable()) {
-            @\unlink($this->getRealPath());
+        if (filled($filename)) {
+            $this->value($this->createFileObject($filename, $mode ?? 'w+'));
         }
     }
 
-    public function getValue(): ?\SplFileObject
+    public function __destruct()
     {
-        $this->writeStream($this);
+        unset($this->value);
 
-        return $this->baseGetValue() ?? $this;
-    }
-
-    public function autoClean(bool $autoClean = true): static
-    {
-        $this->autoDelete = $autoClean;
-
-        return $this;
+        $this->deleteTempFile();
     }
 }

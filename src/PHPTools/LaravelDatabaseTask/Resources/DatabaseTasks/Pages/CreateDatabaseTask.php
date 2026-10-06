@@ -6,12 +6,13 @@ use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use PHPTools\LaravelDatabaseTask\Contracts\InputInterface;
-use PHPTools\LaravelDatabaseTask\Contracts\TaskInterface;
+use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\DatabaseTaskPlugin;
-use PHPTools\LaravelDatabaseTask\Enums\TaskRisk;
+use PHPTools\LaravelDatabaseTask\Enums;
 use PHPTools\LaravelDatabaseTask\Facades\DatabaseTaskFacade;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTask;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTaskClass;
@@ -32,7 +33,7 @@ class CreateDatabaseTask extends CreateRecord
 
         $state = $taskClassComponent?->getState();
 
-        if (isset($state) && \is_subclass_of($state, TaskInterface::class)) {
+        if (isset($state) && \is_subclass_of($state, Contracts\TaskInterface::class)) {
             return (new $state)->getTitle();
         }
 
@@ -53,11 +54,11 @@ class CreateDatabaseTask extends CreateRecord
                 'task_class' => $taskClass->task_class,
                 'title' => $taskClass->title,
                 'description' => '',
-                'risk' => TaskRisk::MEDIUM->value,
+                'risk' => Enums\TaskRisk::MEDIUM->value,
                 'schedules_at' => null,
                 'inputs' => collect($taskClass->task_class::getSupportInputs())
                     ->mapWithKeys(
-                        static fn(InputInterface $input): array => [
+                        static fn(Contracts\InputInterface $input): array => [
                             $input->getName() => [
                                 'input_class' => \get_class($input),
                                 'input_value' => null,
@@ -84,19 +85,27 @@ class CreateDatabaseTask extends CreateRecord
 
     protected function handleRecordCreation(array $data): DatabaseTask
     {
-        /** @var DatabaseTask $task */
-        $task = $this->getModel()::query()->make($data);
+        $inputs = $this->toInputs(Arr::pull($data, 'inputs'));
 
-        $task->user()->associate(Auth::user())->save();
+        /** @var DatabaseTask $taskModel */
+        $taskModel = DatabaseTaskFacade::resolveModel(DatabaseTask::class, $data);
 
-        $task->inputs()->insert(
-            collect(Arr::pull($data, 'inputs'))
-                ->map(static fn(array $array): ?array => DatabaseTaskFacade::fromInputArray($array, 0, $task)?->getAttributes())
-                ->filter()
-                ->all()
-        );
+        $shouldValidate = \is_subclass_of($taskModel->toTask(), Contracts\ShouldValidate::class);
 
-        return $task;
+        $taskModel
+            ->user()->associate(Auth::user())
+            ->setAttribute('status', $shouldValidate ? Enums\TaskStatus::CREATED : Enums\TaskStatus::VALIDATED)
+            ->save();
+
+        $inputsSaved = $taskModel->saveInputs(...$inputs->all());
+
+        if (! $inputsSaved) {
+            throw new \RuntimeException('Failed to save inputs.');
+        }
+
+        $shouldValidate && Artisan::queue('task:dispatch-validate-job');
+
+        return $taskModel;
     }
 
     protected function getPreviewFormAction(): Actions\Action
@@ -120,14 +129,22 @@ class CreateDatabaseTask extends CreateRecord
                 function (): Htmlable {
                     $data = $this->form->getState();
 
-                    $inputs = collect(Arr::pull($data, 'inputs'))
-                        ->map(static fn(array $array) => DatabaseTaskFacade::fromInputArray($array, 0)?->toInput())
-                        ->filter()
-                        ->all();
+                    $inputs = $this->toInputs(Arr::pull($data, 'inputs'));
 
-                    return app($data['task_class'])->preview(...$inputs);
+                    /** @var DatabaseTask $taskModel */
+                    $taskModel = DatabaseTaskFacade::resolveModel(DatabaseTask::class, $data);
+
+                    return $taskModel->toTask()?->preview(...$inputs->all());
                 }
             )
             ->modalFooterActions([]);
+    }
+
+    protected function toInputs(array $inputs): Collection
+    {
+        return collect($inputs)
+            ->map(static fn(array $array) => DatabaseTaskFacade::arrayToInput($array, 0))
+            ->filter()
+            ->values();
     }
 }

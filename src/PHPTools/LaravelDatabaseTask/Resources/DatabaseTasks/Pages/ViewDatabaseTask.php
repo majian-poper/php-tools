@@ -6,7 +6,10 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Auth;
 use PHPTools\LaravelDatabaseTask\DatabaseTaskPlugin;
+use PHPTools\LaravelDatabaseTask\Enums;
+use PHPTools\LaravelDatabaseTask\Events;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTask;
 
 /**
@@ -36,17 +39,21 @@ class ViewDatabaseTask extends ViewRecord
             ->visible(static fn(DatabaseTask $record): bool => $record->requestable())
             ->action(
                 static function (DatabaseTask $record) {
-                    Notification::make()
-                        ->when(
-                            $record->request(),
-                            static fn(Notification $notification): Notification => $notification
-                                ->success()
-                                ->title(__('database-task::model.database_task.actions.request.notifications.requested')),
-                            static fn(Notification $notification): Notification => $notification
-                                ->danger()
-                                ->title(__('database-task::model.database_task.actions.request.notifications.request_failed'))
-                        )
-                        ->send();
+                    $requested = $record->toRequested();
+
+                    if ($requested) {
+                        Events\TaskRequested::dispatch($record, Auth::user());
+
+                        $notification = Notification::make()
+                            ->success()
+                            ->title(__('database-task::model.database_task.actions.request.notifications.requested'));
+                    } else {
+                        $notification = Notification::make()
+                            ->danger()
+                            ->title(__('database-task::model.database_task.actions.request.notifications.request_failed'));
+                    }
+
+                    $notification->send();
                 }
             );
     }

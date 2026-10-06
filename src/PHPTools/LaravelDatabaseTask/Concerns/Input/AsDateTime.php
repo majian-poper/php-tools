@@ -3,6 +3,7 @@
 namespace PHPTools\LaravelDatabaseTask\Concerns\Input;
 
 use Illuminate\Support\Traits\Conditionable;
+use PHPTools\LaravelDatabaseTask\Concerns\HasValue;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 
 trait AsDateTime
@@ -19,11 +20,16 @@ trait AsDateTime
 
     protected bool | \Closure $hasTime = false;
 
+    public function getType(): InputType
+    {
+        return InputType::DATETIME;
+    }
+
     public function asDateTime(bool | \Closure $hasTime = true): static
     {
         $this->hasTime = $hasTime;
 
-        return $this->setType(InputType::DATETIME);
+        return $this;
     }
 
     public function hasTime(): bool

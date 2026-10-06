@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPTools\LaravelDatabaseTask\Concerns\Input;
+namespace PHPTools\LaravelDatabaseTask\Concerns;
 
 use Filament\Support\Concerns\EvaluatesClosures;
 
@@ -8,17 +8,22 @@ trait HasValue
 {
     use EvaluatesClosures;
 
-    protected mixed $value;
+    protected mixed $value = null;
 
     /**
+     * Input :
      * asBoolean     => bool
-     * asNumber      => int / iterable<int> / \SplFileObject
-     * asQuery       => string
      * asDatetime    => \DateTimeInterface
      * asFile        => \SplFileObject
+     * asNumber      => int / iterable<int>
+     * asQuery       => string
      * asSelect      => iterable<int | string>
      *
-     * @return null | bool | int | string | \DateTimeInterface | \SplFileObject | iterable
+     * Ouput :
+     * FileOuput     => \SplFileObject
+     * TextOutput    => string
+     *
+     * @return null | bool | int | string | iterable | \DateTimeInterface | \SplFileObject
      */
     public function getValue(): mixed
     {
@@ -27,6 +32,10 @@ trait HasValue
 
     public function value(mixed $value): static
     {
+        if (isset($this->value)) {
+            throw new \RuntimeException('Value has already been set.');
+        }
+
         $this->value = $value;
 
         return $this;

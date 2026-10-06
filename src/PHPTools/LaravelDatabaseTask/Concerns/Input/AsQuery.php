@@ -3,6 +3,7 @@
 namespace PHPTools\LaravelDatabaseTask\Concerns\Input;
 
 use Illuminate\Support\Traits\Conditionable;
+use PHPTools\LaravelDatabaseTask\Concerns\HasValue;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 
 trait AsQuery
@@ -13,8 +14,8 @@ trait AsQuery
     use HasValidation;
     use HasValue;
 
-    public function asQuery(): static
+    public function getType(): InputType
     {
-        return $this->setType(InputType::QUERY);
+        return InputType::QUERY;
     }
 }

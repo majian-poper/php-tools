@@ -2,24 +2,18 @@
 
 namespace PHPTools\LaravelDatabaseTask\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
+/**
+ * @property-read string $client_original_name
+ */
 class DatabaseTaskFile extends Media
 {
-    public function toTempFileObject(): \SplTempFileObject
+    protected function clientOriginalName(): Attribute
     {
-        $resource = $this->stream();
-
-        $file = new \SplTempFileObject;
-
-        while (! \feof($resource)) {
-            $file->fwrite(\fread($resource, 8192));
-        }
-
-        \fclose($resource);
-
-        $file->rewind();
-
-        return $file;
+        return Attribute::get(
+            fn(mixed $value, array $attributes): string => $attributes['name'] . '.' . $this->extension
+        );
     }
 }

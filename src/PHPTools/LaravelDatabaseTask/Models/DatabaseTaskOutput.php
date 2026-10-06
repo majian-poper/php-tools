@@ -4,6 +4,7 @@ namespace PHPTools\LaravelDatabaseTask\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use PHPTools\LaravelDatabaseTask\Contracts;
 use PHPTools\LaravelDatabaseTask\Facades\DatabaseTaskFacade;
 use PHPTools\LaravelDatabaseTask\Outputs\FileOutput;
@@ -55,11 +56,13 @@ class DatabaseTaskOutput extends Model implements HasMedia
                     return;
                 }
 
-                if (! $model->cachedFile?->isReadable()) {
+                if (! DatabaseTaskFacade::valueIsFile($model->cachedFile)) {
                     return;
                 }
 
-                $model->addMedia($model->cachedFile->getRealPath())->toMediaCollection();
+                $model->addMedia($model->cachedFile->getRealPath())
+                    ->setFileName(Str::uuid()->toString() . '.' . $model->cachedFile->getExtension())
+                    ->toMediaCollection();
             }
         );
     }
@@ -67,7 +70,7 @@ class DatabaseTaskOutput extends Model implements HasMedia
     public static function fromOutput(Contracts\OutputInterface $output, ?DatabaseTask $databaseTask = null): static
     {
         $value = $output->getValue();
-        $isFile = $value instanceof \SplFileObject && $value->isReadable();
+        $isFile = DatabaseTaskFacade::valueIsFile($value);
         $batchOrder = $output instanceof Contracts\BatchableOutput ? $output->getBatchOrder() : 0;
 
         if ($isFile && $value->getSize() === 0) {
@@ -77,7 +80,7 @@ class DatabaseTaskOutput extends Model implements HasMedia
         $model = static::query()->make(
             [
                 'output_class' => \get_class($output),
-                'output_value' => $isFile ? '' : DatabaseTaskFacade::valueToString($value),
+                'output_value' => DatabaseTaskFacade::valueToString($value),
                 'is_file' => $isFile,
                 'batch_order' => $batchOrder,
                 'expires_at' => $output->getExpiresAt(),
@@ -100,35 +103,21 @@ class DatabaseTaskOutput extends Model implements HasMedia
             return $this->outputInstance;
         }
 
-        // TODO try-catch
-
         $isFile = \is_a($this->output_class, FileOutput::class, true) && $this->is_file && $this->file;
 
-        if ($isFile) {
-            $filename = \sys_get_temp_dir() . \DIRECTORY_SEPARATOR . $this->file->file_name;
-
-            \touch($filename);
-
-            $parameters = ['filename' => $filename, 'mode' => 'w+'];
-        }
-
         /** @var FileOutput | TextOutput | NullOutput $output */
-        $output = app($this->output_class, $parameters ?? []);
-
-        if ($isFile && \method_exists($output, 'stream')) {
-            $output->stream(fn() => $this->file->stream());
-        }
+        $output = app($this->output_class);
 
         if (\method_exists($output, 'value')) {
-            $output->value($this->output_value);
+            $output->value($isFile ? fn() => $this->file->stream() : $this->output_value);
+        }
+
+        if (\method_exists($output, 'expiresAt') && isset($this->expires_at)) {
+            $output->expiresAt($this->expires_at);
         }
 
         if ($output instanceof Contracts\BatchableOutput && \method_exists($output, 'batchOrder')) {
             $output->batchOrder($this->batch_order);
-        }
-
-        if (\method_exists($output, 'expiresAt')) {
-            $output->expiresAt($this->expires_at);
         }
 
         return $this->outputInstance = $output;

@@ -11,7 +11,18 @@ use PHPTools\LaravelDatabaseTask\Contracts\InputInterface;
 use PHPTools\LaravelDatabaseTask\Contracts\TaskInterface;
 use PHPTools\LaravelDatabaseTask\Enums\InputType;
 use PHPTools\LaravelDatabaseTask\Enums\TaskRisk;
+use PHPTools\LaravelDatabaseTask\Inputs\ChunkInput;
 
+/**
+ * @template AsBoolean of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsBoolean
+ * @template AsNumber of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsNumber
+ * @template AsSelect of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsSelect
+ * @template AsDateTime of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsDateTime
+ * @template AsFile of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile
+ * @template HasNaming of \PHPTools\LaravelDatabaseTask\Concerns\Input\HasNaming
+ *
+ * @template Input of InputInterface | AsBoolean | AsNumber | AsSelect | AsDateTime | AsFile | HasNaming
+ */
 class DatabaseTaskForm
 {
     /**
@@ -53,6 +64,7 @@ class DatabaseTaskForm
 
                         if (filled($taskType) && \is_subclass_of($taskType, TaskInterface::class)) {
                             return collect($taskType::getSupportInputs())
+                                ->reject(static fn($input): bool => $input instanceof ChunkInput)
                                 ->map(static::makeFieldsetFor(...))
                                 ->all();
                         }
@@ -64,7 +76,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\HasNaming $input
+     * @param Input $input
      */
     protected static function makeFieldsetFor(InputInterface $input): Schemas\Components\Fieldset
     {
@@ -75,7 +87,6 @@ class DatabaseTaskForm
                 [
                     Forms\Components\Hidden::make('input_class'),
                     static::makeInputValueField($input),
-                    static::makeIsFileField($input),
                     static::makeIsExcludedField($input),
                 ]
             )
@@ -83,7 +94,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\InteractsWithInput $input
+     * @param Input $input
      */
     protected static function makeInputValueField(InputInterface $input): Forms\Components\Field
     {
@@ -94,6 +105,7 @@ class DatabaseTaskForm
             InputType::NUMBER => static::makeNumberField($input),
             InputType::SELECT => static::makeSelectField($input),
             InputType::DATETIME => static::makeDatetimeField($input),
+            InputType::FILE => static::makeFileField($input),
             InputType::BOOLEAN => Forms\Components\Checkbox::make('input_value'),
             default => throw new \RuntimeException('Unsupported input field type: ' . $inputType->value),
         };
@@ -120,7 +132,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsNumber $input
+     * @param InputInterface | AsNumber $input
      */
     protected static function makeNumberField(InputInterface $input): Forms\Components\Field
     {
@@ -130,7 +142,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsSelect $input
+     * @param InputInterface | AsSelect $input
      */
     protected static function makeSelectField(InputInterface $input): Forms\Components\Field
     {
@@ -141,7 +153,7 @@ class DatabaseTaskForm
     }
 
     /**
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsDateTime $input
+     * @param InputInterface | AsDateTime $input
      */
     protected static function makeDatetimeField(InputInterface $input): Forms\Components\Field
     {
@@ -152,18 +164,20 @@ class DatabaseTaskForm
     }
 
     /**
-     * TODO: 支持文件上传字段
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile $input
+     * @param InputInterface | AsFile $input
      */
-    protected static function makeIsFileField(InputInterface $input): Forms\Components\Field
+    protected static function makeFileField(InputInterface $input): Forms\Components\Field
     {
-        return Forms\Components\Hidden::make('is_file')
-            ->label(__('database-task::tasks.input_types.is_file'));
+        return Forms\Components\FileUpload::make('input_value')
+            ->visibility('private')
+            ->storeFiles(false)
+            ->preserveFilenames()
+            ->preventFilePathTampering();
     }
 
     /**
      * TODO: 支持可排除字段
-     * @param InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\InteractsWithInput $input
+     * @param Input $input
      */
     protected static function makeIsExcludedField(InputInterface $input): Forms\Components\Field
     {

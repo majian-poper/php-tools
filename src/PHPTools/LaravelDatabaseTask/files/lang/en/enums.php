@@ -9,10 +9,11 @@ return [
     ],
 
     'task_status' => [
-        'UNAPPLIED' => 'Unapplied',
-        'PENDING' => 'Pending',
-        'APPROVED' => 'Approved',
-        'REJECTED' => 'Rejected',
+        'CREATED' => 'Created',
+        'VALIDATING' => 'Validating',
+        'VALIDATED' => 'Validated',
+        'REQUESTED' => 'Requested',
+        'READY' => 'Ready to process',
         'PROCESSING' => 'Processing',
         'PROCESSED' => 'Processed',
         'FAILED' => 'Failed',

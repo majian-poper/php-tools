@@ -15,6 +15,16 @@ use PHPTools\LaravelDatabaseTask\Models\DatabaseTaskInput;
 use PHPTools\LaravelDatabaseTask\Models\DatabaseTaskOutput;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * @template InputInterface of \PHPTools\LaravelDatabaseTask\Contracts\InputInterface
+ * @template AsBoolean of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsBoolean
+ * @template AsNumber of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsNumber
+ * @template AsSelect of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsSelect
+ * @template AsDateTime of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsDateTime
+ * @template AsFile of \PHPTools\LaravelDatabaseTask\Concerns\Input\AsFile
+ *
+ * @template Input of InputInterface | AsBoolean | AsNumber | AsSelect | AsDateTime | AsFile
+ */
 class DatabaseTaskInfolist
 {
     /**
@@ -44,7 +54,11 @@ class DatabaseTaskInfolist
             Infolists\Components\RepeatableEntry::make('normal_outputs')
                 ->label(__('database-task::model.database_task.outputs'))
                 ->schema(static::outputSectionSchema())
-                ->visible(static fn(DatabaseTask $record): bool => $record->toTask()?->showOutputs() && $record->normal_outputs->isNotEmpty()),
+                ->visible(
+                    static function (DatabaseTask $record): bool {
+                        return ($record->toTask()?->showOutputs() ?? false) && $record->normal_outputs->isNotEmpty();
+                    }
+                ),
         ];
     }
 
@@ -110,20 +124,24 @@ class DatabaseTaskInfolist
         return [
             Infolists\Components\TextEntry::make('input_value')
                 ->label(static fn(DatabaseTaskInput $record): string => $record->toInput()->getLabel())
+                ->default('-') // 设置默认值, 避免 formatStateUsing 被跳过
                 ->formatStateUsing(
                     static function (DatabaseTaskInput $record, $state): string {
-                        /** @var \PHPTools\LaravelDatabaseTask\Contracts\InputInterface | \PHPTools\LaravelDatabaseTask\Concerns\InteractsWithInput $input */
+                        /** @var Input $input */
                         $input = $record->toInput();
 
                         return match ($input->getType()) {
                             Enums\InputType::BOOLEAN => __('database-task::tasks.input_types.boolean.' . ($input->getValue() ? 'true' : 'false')),
                             Enums\InputType::SELECT => \implode(', ', Arr::only($input->getOptions(), $input->getValue())),
                             Enums\InputType::DATETIME => $input->getValue()?->format($input->getDisplayFormat()),
-                            Enums\InputType::FILE => $record->file?->file_name,
+                            Enums\InputType::FILE => $record->file?->client_original_name ?? '',
                             default => $state,
                         };
                     }
-                )
+                ),
+            Schemas\Components\Group::make()
+                ->schema(static fn(DatabaseTaskInput $record): array => [static::toDownloadAction($record)])
+                ->visible(static fn(DatabaseTaskInput $record): bool => $record->is_file),
         ];
     }
 
@@ -132,8 +150,7 @@ class DatabaseTaskInfolist
         return [
             Infolists\Components\TextEntry::make('output_value')
                 ->label(__('database-task::model.database_task_output.output_value'))
-                ->color('danger')
-                ->visible(static fn(DatabaseTaskOutput $record): bool => ! $record->is_file && filled($record->output_value)),
+                ->visible(static fn(DatabaseTaskOutput $record): bool => filled($record->output_value)),
             Infolists\Components\TextEntry::make('expires_at')
                 ->label(__('database-task::model.database_task_output.expires_at'))
                 ->inlineLabel()
@@ -146,12 +163,12 @@ class DatabaseTaskInfolist
         ];
     }
 
-    protected static function toDownloadAction(DatabaseTaskOutput $record): Action
+    protected static function toDownloadAction(DatabaseTaskInput | DatabaseTaskOutput $record): Action
     {
         return Action::make('download')
-            ->label(__('database-task::model.database_task_output.actions.download'))
-            ->visible(fn(): bool => $record->is_file && $record->isValid() && isset($record->file))
-            ->before(fn() => Events\TaskOutputDownloading::dispatch($record, Auth::user()))
-            ->action(fn(): StreamedResponse => $record->file->toResponse(request()));
+            ->label(__('database-task::model.database_task_file.actions.download'))
+            ->disabled(static fn(): bool => ! $record->is_file || ! isset($record->file))
+            ->before(static fn() => Events\TaskMediaDownloading::dispatch($record, Auth::user()))
+            ->action(static fn(): StreamedResponse => $record->file->toResponse(request()));
     }
 }

@@ -21,7 +21,12 @@ class DatabaseTaskServiceProvider extends ServiceProvider
 
     protected function bootCommands(): void
     {
-        $this->commands(Commands\DispatchApprovedTaskCommand::class);
+        $this->commands(
+            [
+                Commands\DispatchProcessJobCommand::class,
+                Commands\DispatchValidateJobCommand::class,
+            ]
+        );
     }
 
     protected function bootConfigs(): void
@@ -37,7 +42,9 @@ class DatabaseTaskServiceProvider extends ServiceProvider
     {
         $vendorMigrations = __DIR__ . '/files/migrations';
 
-        $this->loadMigrationsFrom($vendorMigrations);
+        if ($this->app->environment('testing')) {
+            $this->loadMigrationsFrom($vendorMigrations);
+        }
 
         if (! $this->app->runningInConsole()) {
             return;
